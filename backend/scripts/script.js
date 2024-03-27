@@ -1,17 +1,23 @@
 const hre = require("hardhat");
 
+const STABLE_CONTRACT_ADDR = process.env.STABLE_CONTRACT_ADDR || "";
+const STAKING_CONTRACT_ADDR = process.env.STAKING_CONTRACT_ADDR || "";
+
 async function main() {
 
     // récuperation du contrat
     const contract = await ethers.getContractFactory('StableRupee');
 
     // connexion au contrat déployé
-    const dcontract = contract.attach("0x725314746e727f586E9FCA65AeD5dBe45aA71B99");
+    const dcontract = contract.attach(STABLE_CONTRACT_ADDR);
 
-    let owner = await dcontract.owner()
-    console.log('Contract owner : ', owner)
+    let owner = await dcontract.owner();
+    console.log('Contract owner : ', owner);
 
-    await dcontract.mint(owner, 50000)
+    // Minting LKRS tokens to owner
+    await dcontract.mint(owner, 50000);
+    // Minting LKRS tokens to Staking contract addr
+    await dcontract.mint(STAKING_CONTRACT_ADDR, 1000000);
 
     const contractBalance = await ethers.provider.getBalance(dcontract);
     console.log('Contract balance: ', contractBalance.toString());
@@ -22,12 +28,12 @@ async function main() {
     const totalSup = await dcontract.totalSupply();
     console.log('Total supply: ', totalSup.toString());
 
-    const ethusd = await dcontract.getEthUsd();
+    const ethusd = await dcontract.getEthUsdRate();
     console.log('ETH/USD exhange price: ', ethusd.toString());
 
     const impersonatedSigner = await ethers.getImpersonatedSigner("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
     const amountOne = ethers.parseEther("1");
-    await dcontract.connect(impersonatedSigner).swap({ value: amountOne });
+    await dcontract.connect(impersonatedSigner).buy({ value: amountOne });
 
     const userBalance = await dcontract.balanceOf("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
     console.log('User LKRS balance: ', userBalance.toString());

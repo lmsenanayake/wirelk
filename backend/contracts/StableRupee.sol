@@ -12,7 +12,9 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
     using SafeCast for int256;
 
     //The total number of NFTs
-    uint256 private constant LKRS_RATE = 30275;
+    uint24 private constant LKRS_RATE = 3027500;
+
+    uint40 private factor = 1e12;
 
     AggregatorV3Interface internal dataFeed;
 
@@ -29,7 +31,7 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
      *
      * Note that `value` may be zero.
      */
-    event Mint(address indexed to, uint256 value);
+    event Buy(address indexed to, uint256 value);
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -50,17 +52,16 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
         _mint(to, amount);
     }
 
-    function swap() external payable {
+    function buy() external payable {
         if (msg.value <= 0) {
             revert EmptyValue(_msgSender(), msg.value);
         }
 
-        uint256 amount = (((msg.value / 1 ether) * getEthUsd()) * LKRS_RATE) /
-            1e10;
+        uint256 amount = (((msg.value / 1 ether) * getEthUsdRate()) * getRupeeUsdRate()) / factor;
 
         _mint(_msgSender(), amount);
 
-        emit Mint(_msgSender(), amount);
+        emit Buy(_msgSender(), amount);
     }
 
     function withdrawAllEth() external payable onlyOwner {
@@ -76,13 +77,18 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
         emit Withdraw(owner(), balanace);
     }
 
-    function getEthUsd() public view returns (uint) {
-        (, int price, , , ) = dataFeed.latestRoundData();
+    function getEthUsdRate() public view returns (uint) {
+        //(, int price, , , ) = dataFeed.latestRoundData();
 
         //uint8 Decimals = dataFeed.decimals();
         //uint Price = uint(price);
         //revert EmptyValue(_msgSender(), uint(price));
         //return Price / 10 ** Decimals;
-        return price.toUint256();
+        //return price.toUint256();
+        return 356700000000;
+    }
+
+    function getRupeeUsdRate() public pure returns (uint24) {
+        return LKRS_RATE;
     }
 }
