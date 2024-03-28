@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 /// @title Stable Lankan Rupee (LKRS) project
@@ -15,7 +14,6 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 /// @dev This contract does not have the price stabilizer mechanism
 /// @custom:experimental This contract was created for educational purposes.
 contract StableRupee is ERC20, ERC20Burnable, Ownable {
-    using Math for uint256;
     using SafeCast for int256;
 
     /// @notice Constant contains the LKR/USD decimal floating number
