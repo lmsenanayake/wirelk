@@ -27,31 +27,104 @@ describe("StableRupee tests", function () {
         });
     });
 
-    /*describe("Testing addVoter function", function () {
+    describe("Testing mint function", function () {
 
-        it("Should not add twise the same voter", async function () {
-            const { voting, owner } = await loadFixture(deployContract);
-            let transcation = await voting.addVoter(owner.address);
+        it("Should not be able to mint if not owner", async function () {
+            const { contract, owner, addr1, addr2 } = await loadFixture(deployContract);
+            // Try to mint LKRS not beeing owner
+            await expect(contract.connect(addr1).mint(addr2, 1000000))
+                .to.be.revertedWithCustomError(contract, "OwnableUnauthorizedAccount")
+        });
+
+        it("Should mint LKRS of the reqused amount", async function () {
+            const { contract, owner, addr1, addr2 } = await loadFixture(deployContract);
+            let transcation = await contract.mint(addr1, 1000000);
             await transcation.wait();
-            // Try to add a voter who is already voter
-            await expect(voting.addVoter(owner.address))
-                .to.be.revertedWith("Already registered")
+
+            const val = await contract.balanceOf(addr1);
+            expect(val).to.be.equal(1000000);
+        });
+    });
+
+    describe("Testing buy function", function () {
+
+        it("Should not be able to buy with empty ETH", async function () {
+            const { contract, owner, addr1, addr2 } = await loadFixture(deployContract);
+            // Try to buy LKRS without eth
+            await expect(contract.connect(addr1).buy())
+                .to.be.revertedWithCustomError(contract, "EmptyValue")
         });
 
-        it("Should not add voter when the workflow is not RegisteringVoters", async function () {
-            const { voting, owner, addr1 } = await loadFixture(deployContract);
-            let transcation = await voting.startProposalsRegistering();
+        it("Should mint LKRS and emit buy event", async function () {
+            const { contract, owner, addr1, addr2 } = await loadFixture(deployContract);
+            await expect(contract.connect(addr1).buy({ value: ethers.parseEther("0.5") }))
+                .to.emit(contract, "Buy");
+        });
+
+        it("Should mint LKRS of the ETH corresponding USD amount", async function () {
+            const { contract, owner, addr1, addr2 } = await loadFixture(deployContract);
+            let ethAmount = "2";
+            let transcation = await contract.connect(addr1).buy({ value: ethers.parseEther(ethAmount) });
             await transcation.wait();
-            // Try to add a voter when the workflow is not correct
-            await expect(voting.addVoter(addr1.address))
-                .to.be.revertedWith("Voters registration is not open yet")
+
+            let ethusd = await contract.connect(addr1).getEthUsdRate();
+            let usdlkr = await contract.connect(addr1).getUsdRupeeRate();
+            let decimal = await contract.connect(addr1).decimals();
+            let val = await contract.connect(addr1).balanceOf(addr1);
+            let res = (Number(ethAmount) * Number(ethusd) * Number(usdlkr) / 10 ** Number(decimal));
+
+            expect(Number(val)).to.be.equal(res);
+        });
+    });
+
+    describe("Testing withdrawAllEth function", function () {
+
+        it("Should not be able to withdraw if not owner", async function () {
+            const { contract, owner, addr1, addr2 } = await loadFixture(deployContract);
+            // Try to withdraw LKRS not beeing owner
+            await expect(contract.connect(addr1).withdrawAllEth())
+                .to.be.revertedWithCustomError(contract, "OwnableUnauthorizedAccount")
         });
 
-        it("Should not add voter with any other address", async function () {
-            const { voting, owner, addr1 } = await loadFixture(deployContract);
-            // Try to add owner as a voter with a non owner connexion
-            await expect(voting.connect(addr1).addVoter(owner.address))
-                .to.be.revertedWithCustomError(voting, "OwnableUnauthorizedAccount")
+        it("Should not be able to withdraw with empty balance", async function () {
+            const { contract, owner, addr1, addr2 } = await loadFixture(deployContract);
+            // Try to withdraw LKRS not beeing owner
+            await expect(contract.withdrawAllEth())
+                .to.be.revertedWithCustomError(contract, "ERC20InsufficientBalance")
         });
-    });*/
+
+        it("Should send all ETH of the contract to owner", async function () {
+            const { contract, owner, addr1, addr2 } = await loadFixture(deployContract);
+            let transcation = await contract.connect(addr1).buy({ value: ethers.parseEther("100") });
+            await transcation.wait();
+
+            let aBalanceETH = await ethers.provider.getBalance(owner);
+
+            // Try to withdraw all ETH of the LKRS contract to owner
+            transcation = await contract.withdrawAllEth();
+            await transcation.wait();
+
+            let bBalanceETH = await ethers.provider.getBalance(owner)
+
+            expect(BN(bBalanceETH)).to.be.greaterThan(BN(aBalanceETH));
+        });
+    });
+
+    describe("Testing getEthUsdRate function", function () {
+
+        it("Should return ETH/USD exchange rate", async function () {
+            const { contract, owner, addr1, addr2 } = await loadFixture(deployContract);
+            let ethusd = await contract.getEthUsdRate()
+            expect(ethusd).to.be.greaterThan(0);
+        });
+    });
+
+    describe("Testing getUsdRupeeRate function", function () {
+
+        it("Should return USD/LKR exchange rate", async function () {
+            const { contract, owner, addr1, addr2 } = await loadFixture(deployContract);
+            let rate = await contract.getUsdRupeeRate()
+            expect(rate).to.be.greaterThan(0);
+        });
+    });
 });

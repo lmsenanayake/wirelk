@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 /// @title Stable Lankan Rupee (LKRS) project
@@ -14,14 +15,16 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 /// @dev This contract does not have the price stabilizer mechanism
 /// @custom:experimental This contract was created for educational purposes.
 contract StableRupee is ERC20, ERC20Burnable, Ownable {
+    using Math for uint256;
     using SafeCast for int256;
+
+    /// @notice Constant contains the LKR/USD decimal floating number
+    /// @dev TODO Must be replaced by a datafeed of the oracle
+    uint8 private constant LKRS_DECIMALS = 8;
 
     /// @notice Constant contains the LKR/USD exange rate
     /// @dev TODO Must be replaced by a datafeed of the oracle
-    uint24 private constant LKRS_RATE = 3027500;
-
-    /// @notice Variable used to handle the price precision
-    uint40 private factor = 1e12;
+    uint40 private constant LKRS_RATE = 30275000000;
 
     /// @notice Chainlink datafeed Aggregator Interface
     AggregatorV3Interface internal dataFeed;
@@ -39,6 +42,8 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
     /// @notice Indicates an error related to the current ETH value sent
     /// @param sender Address of the contract user
     error EmptyValue(address sender);
+
+    error Log(address sender, uint256 value, uint256 value2, uint256 value3);
 
     /// @notice Creates a ERC20 contract for the Stable Lankan Rupee (LKRS)
     /// @param initialOwner Address of the contract owner
@@ -64,9 +69,14 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
             revert EmptyValue(_msgSender());
         }
 
-        uint256 amount = (((msg.value / 1 ether) * getEthUsdRate()) *
-            getRupeeUsdRate()) / factor;
-
+        uint256 amount = ((((msg.value * getEthUsdRate()) / 1 ether) *
+            getUsdRupeeRate()) / 10 ** decimals());
+        // revert Log(
+        //     _msgSender(),
+        //     amount,
+        //     getUsdRupeeRate(),
+        //     amount / 10 ** decimals()
+        // );
         _mint(_msgSender(), amount);
 
         emit Buy(_msgSender(), amount);
@@ -92,17 +102,35 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
     function getEthUsdRate() public view returns (uint) {
         //(, int price, , , ) = dataFeed.latestRoundData();
 
+        // TODO calculate with DECIMALS
         //uint8 Decimals = dataFeed.decimals();
         //uint Price = uint(price);
         //revert EmptyValue(_msgSender(), uint(price));
         //return Price / 10 ** Decimals;
         //return price.toUint256();
-        return 356700000000;
+        uint256 price = 356700000000;
+        uint8 dec = 8;
+        // Truncate the price to 1e8 so removes cents in favor to the contract
+        //uint8 decimals = decimals();
+        return (price * 10 ** decimals()) / 10 ** dec;
+        // uint256 rate = (price / 10 ** dec) * 10 ** decimals();
+        // if (_ceil == true) {
+        //     rate = price.ceilDiv(10 ** dec);
+        // }
+
+        // return rate;
     }
 
-    /// @notice Returns the LKR/USD exchange rate (temporary stored in constant)
+    /// @notice Returns the USD/LKR exchange rate (temporary stored in constant)
     /// @dev TODO must replaced by a request to the Oracle's custom datafeeds
-    function getRupeeUsdRate() public pure returns (uint24) {
-        return LKRS_RATE;
+    function getUsdRupeeRate() public view returns (uint256) {
+        // Truncate the price to 1e9 so removes cents in favor to the contract
+        return (LKRS_RATE * 10 ** decimals()) / 10 ** LKRS_DECIMALS;
+        //return (price / 10 ** LKRS_DECIMALS) * 10 ** decimals();
+        // if (_ceil == true) {
+        //     rate = price.ceilDiv(10 ** LKRS_DECIMALS);
+        // }
+        //return (price / 10 ** LKRS_DECIMALS) * 10 ** decimals();
+        // return rate;
     }
 }
