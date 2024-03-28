@@ -8,39 +8,41 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
+/// @title Stable Lankan Rupee (LKRS) project
+/// @author Lakshitha SENANAYAKE
+/// @notice The stable coin for Sri Lankan Rupee
+/// @dev This contract does not have the price stabilizer mechanism
+/// @custom:experimental This contract was created for educational purposes.
 contract StableRupee is ERC20, ERC20Burnable, Ownable {
     using SafeCast for int256;
 
-    //The total number of NFTs
+    /// @notice Constant contains the LKR/USD exange rate
+    /// @dev TODO Must be replaced by a datafeed of the oracle
     uint24 private constant LKRS_RATE = 3027500;
 
+    /// @notice Variable used to handle the price precision
     uint40 private factor = 1e12;
 
+    /// @notice Chainlink datafeed Aggregator Interface
     AggregatorV3Interface internal dataFeed;
 
-    /**
-     * @dev Indicates an error related to the current `balance` of a `sender`. Used in transfers.
-     * @param sender Address whose tokens are being transferred.
-     * @param value Current balance for the interacting account.
-     */
-    error EmptyValue(address sender, uint256 value);
-
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
+    /// @notice Emits when a user buys new LKRS tokens
+    /// @param to The new owner address
+    /// @param value The number of LKRS tokens minted
     event Buy(address indexed to, uint256 value);
 
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
+    /// @notice Emits when the owner withdraw all ETH
+    /// @param to The owner address
+    /// @param value The number of ETH withdraw
     event Withdraw(address indexed to, uint256 value);
 
+    /// @notice Indicates an error related to the current ETH value sent
+    /// @param sender Address of the contract user
+    error EmptyValue(address sender);
+
+    /// @notice Creates a ERC20 contract for the Stable Lankan Rupee (LKRS)
+    /// @param initialOwner Address of the contract owner
+    /// @param oracleEthUsdAddr Oracle address which contains ETH/USD echange rate
     constructor(
         address initialOwner,
         address oracleEthUsdAddr
@@ -48,22 +50,30 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
         dataFeed = AggregatorV3Interface(oracleEthUsdAddr);
     }
 
+    /// @notice Used only by the owner to mint LKRS tokens
+    /// @param to Address which gets the minted tokens
+    /// @param amount Number of LKRS tokens to be minted
     function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
     }
 
+    /// @notice Allows users to buy LKRS token with ETH
+    /// @dev Reverts if the ETH value received is empty
     function buy() external payable {
         if (msg.value <= 0) {
-            revert EmptyValue(_msgSender(), msg.value);
+            revert EmptyValue(_msgSender());
         }
 
-        uint256 amount = (((msg.value / 1 ether) * getEthUsdRate()) * getRupeeUsdRate()) / factor;
+        uint256 amount = (((msg.value / 1 ether) * getEthUsdRate()) *
+            getRupeeUsdRate()) / factor;
 
         _mint(_msgSender(), amount);
 
         emit Buy(_msgSender(), amount);
     }
 
+    /// @notice Allows the owner to withdraw all stored ETH in this contract
+    /// @dev Reverts if the contract ETH balance is empty
     function withdrawAllEth() external payable onlyOwner {
         uint256 balanace = address(this).balance;
         if (balanace <= 0) {
@@ -77,6 +87,8 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
         emit Withdraw(owner(), balanace);
     }
 
+    /// @notice Returns the ETH/USD exchange rate from Chainlink
+    /// @dev Oracle returns the price with 8 decimals precision
     function getEthUsdRate() public view returns (uint) {
         //(, int price, , , ) = dataFeed.latestRoundData();
 
@@ -88,6 +100,8 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
         return 356700000000;
     }
 
+    /// @notice Returns the LKR/USD exchange rate (temporary stored in constant)
+    /// @dev TODO must replaced by a request to the Oracle's custom datafeeds
     function getRupeeUsdRate() public pure returns (uint24) {
         return LKRS_RATE;
     }

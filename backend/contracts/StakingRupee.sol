@@ -6,10 +6,15 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./StableRupee.sol";
 
+/// @title Stable Lankan Rupee (LKRS) Staking project
+/// @author Lakshitha SENANAYAKE
+/// @notice The staking mechanism for the Stable Sri Lankan Rupee (LKRS)
+/// @dev This contract has 2 pools of staking with ETH and LKRS
+/// @custom:experimental This contract was created for educational purposes.
 contract StakingRupee is Ownable {
     using Math for uint256;
 
-    StableRupee public immutable stableRupee;
+    StableRupee private immutable stableRupee;
 
     uint24 private factor = 1e6;
 
@@ -64,6 +69,17 @@ contract StakingRupee is Ownable {
      * @param value Current balance for the interacting account.
      */
     error InsufficientBalance(address sender, uint256 value);
+
+    /**
+     * @dev Indicates an error related to the current `balance` of a `sender`. Used in transfers.
+     * @param sender Address whose tokens are being transferred.
+     * @param value Current balance for the interacting account.
+     */
+    error IncorrectRewardRate(address sender, uint256 value);
+
+    error RewardDurationNotFinish(uint256 finishTime, uint256 blockTime);
+
+    error TransferFailed(address to, uint256 value);
 
     constructor(
         address initialOwner,
@@ -151,9 +167,10 @@ contract StakingRupee is Ownable {
         balanceOfEth[_msgSender()] -= _amount;
         totalSupplyEth -= _amount;
 
-        // Send the total balance stored in the contract to the owner
         (bool sent, ) = payable(_msgSender()).call{value: _amount}("");
-        require(sent, "Failed to send Ether");
+        if (sent != true) {
+            revert TransferFailed(_msgSender(), _amount);
+        }
     }
 
     function earned(address _account) public view returns (uint256) {
@@ -168,7 +185,9 @@ contract StakingRupee is Ownable {
     }
 
     function setRewardsDuration(uint256 _duration) external onlyOwner {
-        require(finishAt < block.timestamp, "reward duration not finished");
+        if (block.timestamp < finishAt) {
+            revert RewardDurationNotFinish(finishAt, block.timestamp);
+        }
         duration = _duration;
     }
 
@@ -184,12 +203,19 @@ contract StakingRupee is Ownable {
             rewardRate = (_amount + remainingRewards) / duration;
         }
 
-        require(rewardRate > 0, "reward rate = 0");
-        require(
-            (rewardRate * duration).ceilDiv(factor) <=
-                stableRupee.balanceOf(address(this)),
-            "reward amount > balance"
-        );
+        if (rewardRate <= 0) {
+            revert IncorrectRewardRate(_msgSender(), rewardRate);
+        }
+
+        if (
+            stableRupee.balanceOf(address(this)) <=
+            (rewardRate * duration).ceilDiv(factor)
+        ) {
+            revert InsufficientBalance(
+                address(this),
+                stableRupee.balanceOf(address(this))
+            );
+        }
 
         finishAt = block.timestamp + duration;
         updatedAt = block.timestamp;
