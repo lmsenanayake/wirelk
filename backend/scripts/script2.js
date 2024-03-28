@@ -18,13 +18,17 @@ async function main() {
     const duration = await dcontract.duration();
     console.log('Staking duration: ', duration.toString());
 
-    await dcontract.setRewardAmount(ethers.parseUnits("50", "mwei"))
+    await dcontract.setRewardAmount(ethers.parseUnits("50"))
     const rewardRate = await dcontract.rewardRate();
     console.log('Staking reward rate: ', rewardRate.toString());
 
     await dcontract.stakeEth({ value: ethers.parseEther("0.5") });
     const ownerBalance = await dcontract.getStakedEthNumber();
     console.log('Owner ETH balance: ', ownerBalance.toString());
+
+    await dcontract.stakeRupee(ethers.parseEther("10"));
+    const ownerLKRSBalance = await dcontract.getStakedRupeeNumber();
+    console.log('Owner LKRS balance: ', ownerLKRSBalance.toString());
 
     /*const totalSup = await dcontract.totalSupply();
     console.log('Total supply: ', totalSup.toString());

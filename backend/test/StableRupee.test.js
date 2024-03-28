@@ -7,8 +7,6 @@ const ORACLE_CONTRACT_ADDR = process.env.ORACLE_CONTRACT_ADDR || "";
 
 describe("StableRupee tests", function () {
 
-    //let owner, addr1, addr2, addr3;
-
     async function deployContract() {
 
         const [owner, addr1, addr2, addr3] = await ethers.getSigners();

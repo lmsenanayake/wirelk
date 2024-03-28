@@ -2,6 +2,7 @@
 // Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity ^0.8.24;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./StableRupee.sol";
@@ -11,83 +12,80 @@ import "./StableRupee.sol";
 /// @notice The staking mechanism for the Stable Sri Lankan Rupee (LKRS)
 /// @dev This contract has 2 pools of staking with ETH and LKRS
 /// @custom:experimental This contract was created for educational purposes.
-contract StakingRupee is Ownable {
+contract StakingRupee is ERC20, Ownable {
+
     using Math for uint256;
 
+    /// @notice The ERC20 contract LKRS
     StableRupee private immutable stableRupee;
 
-    uint24 private factor = 1e6;
-
-    // Duration of rewards to be paid out (in seconds)
+    /// @notice Stores the staking duration
     uint256 public duration;
-    // Timestamp of when the rewards finish
+
+    /// @notice Stores the finishing time
     uint256 public finishAt;
-    // Minimum of last updated time and reward finish time
+
+    /// @notice Minimum of last updated time and reward finish time
     uint256 public updatedAt;
 
-    // Total staked
+    /// @notice Total staked LKRS token
     uint256 public totalSupplyRupee;
 
-    // Total staked
+    /// @notice Total staked ETH number
     uint256 public totalSupplyEth;
 
-    // Reward to be paid out per second
+    /// @notice Reward to be paid out per second
     uint256 public rewardRate;
 
-    // Sum of (reward rate * dt * 1e18 / total supply)
+    /// @notice Sum of (reward rate * dt * 1e18 / total supply)
     uint256 public rewardPerTokenStored;
 
-    // User address => staked amount
+    /// @notice User address => staked balance amount for LKRS
     mapping(address => uint256) public balanceOfRupee;
 
-    // User address => staked amount
+    /// @notice User address => staked balance amount for ETH
     mapping(address => uint256) public balanceOfEth;
 
-    // User address => rewardPerTokenStored
+    /// @notice User address => rewardPerTokenStored
     mapping(address => uint256) public userRewardPerTokenPaid;
 
-    // User address => rewards to be claimed
+    /// @notice User address => rewards to be claimed
     mapping(address => uint256) public rewards;
 
-    /**
-     * @dev Indicates an error related to the current `balance` of a `sender`. Used in transfers.
-     * @param sender Address whose tokens are being transferred.
-     * @param value Current balance for the interacting account.
-     */
     error Log(address sender, uint256 value, uint256 value2, uint256 value3);
 
-    /**
-     * @dev Indicates an error related to the current `balance` of a `sender`. Used in transfers.
-     * @param sender Address whose tokens are being transferred.
-     * @param value Current balance for the interacting account.
-     */
     error EmptyAmount(address sender, uint256 value);
 
-    /**
-     * @dev Indicates an error related to the current `balance` of a `sender`. Used in transfers.
-     * @param sender Address whose tokens are being transferred.
-     * @param value Current balance for the interacting account.
-     */
     error InsufficientBalance(address sender, uint256 value);
 
-    /**
-     * @dev Indicates an error related to the current `balance` of a `sender`. Used in transfers.
-     * @param sender Address whose tokens are being transferred.
-     * @param value Current balance for the interacting account.
-     */
     error IncorrectRewardRate(address sender, uint256 value);
 
     error RewardDurationNotFinish(uint256 finishTime, uint256 blockTime);
 
     error TransferFailed(address to, uint256 value);
 
+    event StakeEth(address to, uint256 value);
+
+    event StakeRupee(address to, uint256 value);
+
+    event WithdrawEth(address to, uint256 value);
+
+    event WithdrawRupee(address to, uint256 value);
+
+    event RewardClaimed(address to, uint256 value);
+
+    /// @notice Creates a contract of the Stake Stable Lankan Rupee (LKRS)
+    /// @param initialOwner Address of the contract owner
+    /// @param rupeeToken Address of the LKRS contract
     constructor(
         address initialOwner,
         address rupeeToken
-    ) Ownable(initialOwner) {
+    ) ERC20("Stable Lankan Rupee", "LKRS") Ownable(initialOwner) {
         stableRupee = StableRupee(rupeeToken);
     }
 
+    /// @notice Modifier used to calculate rewards
+    /// @param _account Address of the sender
     modifier updateReward(address _account) {
         rewardPerTokenStored = rewardPerToken();
         updatedAt = lastTimeRewardApplicable();
@@ -100,24 +98,38 @@ contract StakingRupee is Ownable {
         _;
     }
 
+    /// @notice Calculate the min time for reward
+    /// @dev Using Math min function
+    /// @return uint256 Returns the min time
     function lastTimeRewardApplicable() public view returns (uint256) {
         return finishAt.min(block.timestamp);
     }
 
+    /// @notice Calculate the reward per token based on total supply
+    /// @dev Uses the 2 pools to calculate the allowed reward
+    /// @return uint256 Returns the calculated reward per token
     function rewardPerToken() public view returns (uint256) {
         if (totalSupplyRupee == 0 && totalSupplyEth == 0) {
             return rewardPerTokenStored;
         }
+        // Hack to avoid calculation error when lasttime is equal to update
+        uint256 rewardTime = lastTimeRewardApplicable() - updatedAt;
+        if (rewardTime <= 0) {
+            rewardTime = 1;
+        }
 
-        uint256 totalSupInUsd = (totalSupplyEth * stableRupee.getEthUsdRate()) +
-            (totalSupplyRupee * stableRupee.getRupeeUsdRate());
+        uint256 totalSupInUsd = ((totalSupplyEth *
+            stableRupee.getEthUsdRate()) / 1e18) +
+            (((totalSupplyRupee * 1e18) / stableRupee.getUsdRupeeRate()));
 
         return
             rewardPerTokenStored +
-            (rewardRate * (lastTimeRewardApplicable() - updatedAt) * 1e18) /
+            (rewardRate * rewardTime * 1e18) /
             totalSupInUsd;
     }
 
+    /// @notice Allows users to stake LKRS
+    /// @dev The staked LKRS are stored in balanceOfRupee
     function stakeRupee(uint256 _amount) external updateReward(_msgSender()) {
         if (_amount <= 0) {
             revert EmptyAmount(_msgSender(), _amount);
@@ -126,8 +138,12 @@ contract StakingRupee is Ownable {
         stableRupee.transferFrom(_msgSender(), address(this), _amount);
         balanceOfRupee[_msgSender()] += _amount;
         totalSupplyRupee += _amount;
+
+        emit StakeRupee(_msgSender(), _amount);
     }
 
+    /// @notice Allows users to stake ETH
+    /// @dev The staked ETH are stored in balanceOfEth
     function stakeEth() external payable updateReward(_msgSender()) {
         if (msg.value <= 0) {
             revert EmptyAmount(_msgSender(), msg.value);
@@ -135,11 +151,13 @@ contract StakingRupee is Ownable {
 
         balanceOfEth[_msgSender()] += msg.value;
         totalSupplyEth += msg.value;
+
+        emit StakeEth(_msgSender(), msg.value);
     }
 
-    function withdrawRupee(
-        uint256 _amount
-    ) external updateReward(_msgSender()) {
+    /// @notice Allows users to withdraw the total number or less of staked LKRS
+    /// @param _amount Number of LKRS user want to withdraw
+    function withdrawRupee(uint256 _amount) external updateReward(_msgSender()) {
         if (_amount <= 0) {
             revert EmptyAmount(_msgSender(), _amount);
         }
@@ -151,11 +169,14 @@ contract StakingRupee is Ownable {
         balanceOfRupee[_msgSender()] -= _amount;
         totalSupplyRupee -= _amount;
         stableRupee.transfer(_msgSender(), _amount);
+
+        emit WithdrawRupee(_msgSender(), _amount);
     }
 
-    function withdrawEth(
-        uint256 _amount
-    ) external payable updateReward(_msgSender()) {
+    /// @notice Allows users to withdraw the total number or less of staked ETH
+    /// @param _amount Number of ETH user want to withdraw
+    /// @dev The withdraw ETH number will be sent to user address
+    function withdrawEth(uint256 _amount) external payable updateReward(_msgSender()) {
         if (_amount <= 0) {
             revert EmptyAmount(_msgSender(), _amount);
         }
@@ -171,19 +192,22 @@ contract StakingRupee is Ownable {
         if (sent != true) {
             revert TransferFailed(_msgSender(), _amount);
         }
+
+        emit WithdrawEth(_msgSender(), _amount);
     }
 
+    /// @notice Returns the amount of earned tokens
+    /// @param _account Address of the account to check
     function earned(address _account) public view returns (uint256) {
-        uint256 totalBalanceOfInUsd = (balanceOfEth[_account] *
-            stableRupee.getEthUsdRate()) +
-            (balanceOfRupee[_account] * stableRupee.getRupeeUsdRate());
+        uint256 totalBalanceOfInUsd = ((balanceOfEth[_account] * stableRupee.getEthUsdRate()) / 1e18 ) +
+            (((balanceOfRupee[_account]*1e18) / stableRupee.getUsdRupeeRate()));
 
-        return
-            ((totalBalanceOfInUsd *
-                (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) +
-            rewards[_account];
+        return ((totalBalanceOfInUsd * (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) + rewards[_account];
     }
 
+    /// @notice Used by the owner to chang de reward duration
+    /// @dev Durations must be passed in seconds
+    /// @param _duration Reward duration in seconds
     function setRewardsDuration(uint256 _duration) external onlyOwner {
         if (block.timestamp < finishAt) {
             revert RewardDurationNotFinish(finishAt, block.timestamp);
@@ -191,9 +215,9 @@ contract StakingRupee is Ownable {
         duration = _duration;
     }
 
-    /**
-     * amount in LKRS
-     */
+    /// @notice Used by the owner to set the reward amount
+    /// @dev Reward amount is devided by the duration
+    /// @param _amount Reward amount
     function setRewardAmount(uint256 _amount) external onlyOwner {
         if (block.timestamp >= finishAt) {
             rewardRate = _amount / duration;
@@ -209,7 +233,7 @@ contract StakingRupee is Ownable {
 
         if (
             stableRupee.balanceOf(address(this)) <=
-            (rewardRate * duration).ceilDiv(factor)
+            ((rewardRate * duration) / 1e18)
         ) {
             revert InsufficientBalance(
                 address(this),
@@ -220,27 +244,36 @@ contract StakingRupee is Ownable {
         finishAt = block.timestamp + duration;
         updatedAt = block.timestamp;
 
-        // revert Log(
-        //     address(this),
-        //     finishAt,
-        //     updatedAt,
-        //     finishAt.min(block.timestamp)
-        // );
+        // revert Log(address(this), _amount, rewardRate, updatedAt);
     }
 
+    /// @notice Returns the user's staked LKRS token balance
+    /// @return uint256 Number of LRKR tokens of the user balance
     function getStakedRupeeNumber() external view returns (uint256) {
         return balanceOfRupee[_msgSender()];
     }
 
+    /// @notice Returns the user's staked ETH balance
+    /// @return uint256 Number of ETH of the user balance
     function getStakedEthNumber() external view returns (uint256) {
         return balanceOfEth[_msgSender()];
     }
 
+    /// @notice Allows the user to claim the earned rewards
+    /// @dev The earned tokens will be   to the user address
     function getReward() external updateReward(_msgSender()) {
         uint256 reward = rewards[_msgSender()];
-        if (reward > 0) {
-            rewards[_msgSender()] = 0;
-            stableRupee.transfer(_msgSender(), reward);
+
+        if (reward <= 0) {
+            revert InsufficientBalance(
+                _msgSender(),
+                reward
+            );
         }
+
+        rewards[_msgSender()] = 0;
+        stableRupee.transfer(_msgSender(), reward);
+
+        emit RewardClaimed(_msgSender(), reward);
     }
 }
