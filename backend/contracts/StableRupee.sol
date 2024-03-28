@@ -110,27 +110,14 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
         //return price.toUint256();
         uint256 price = 356700000000;
         uint8 dec = 8;
-        // Truncate the price to 1e8 so removes cents in favor to the contract
-        //uint8 decimals = decimals();
+        // Converting the price to 1e18 in order to have correct decimals
         return (price * 10 ** decimals()) / 10 ** dec;
-        // uint256 rate = (price / 10 ** dec) * 10 ** decimals();
-        // if (_ceil == true) {
-        //     rate = price.ceilDiv(10 ** dec);
-        // }
-
-        // return rate;
     }
 
     /// @notice Returns the USD/LKR exchange rate (temporary stored in constant)
     /// @dev TODO must replaced by a request to the Oracle's custom datafeeds
     function getUsdRupeeRate() public view returns (uint256) {
-        // Truncate the price to 1e9 so removes cents in favor to the contract
+        // Converting the rate to 1e18 in order to have correct decimals
         return (LKRS_RATE * 10 ** decimals()) / 10 ** LKRS_DECIMALS;
-        //return (price / 10 ** LKRS_DECIMALS) * 10 ** decimals();
-        // if (_ceil == true) {
-        //     rate = price.ceilDiv(10 ** LKRS_DECIMALS);
-        // }
-        //return (price / 10 ** LKRS_DECIMALS) * 10 ** decimals();
-        // return rate;
     }
 }
