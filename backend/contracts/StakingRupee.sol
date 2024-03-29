@@ -23,14 +23,14 @@ contract StakingRupee is Ownable {
     /// @notice The ERC20 contract LKRS
     StableRupee private immutable stableRupee;
 
-    /// @notice Stores the staking duration
-    uint256 public duration;
-
     /// @notice Stores the finishing time
-    uint256 public finishAt;
+    uint256 private finishAt;
 
     /// @notice Minimum of last updated time and reward finish time
-    uint256 public updatedAt;
+    uint256 private updatedAt;
+
+    /// @notice Stores the staking duration
+    uint256 public duration;
 
     /// @notice Total staked LKRS token
     uint256 public totalSupplyRupee;
