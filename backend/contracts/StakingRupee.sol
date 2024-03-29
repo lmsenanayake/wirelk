@@ -12,9 +12,13 @@ import "./StableRupee.sol";
 /// @notice The staking mechanism for the Stable Sri Lankan Rupee (LKRS)
 /// @dev This contract has 2 pools of staking with ETH and LKRS
 /// @custom:experimental This contract was created for educational purposes.
-contract StakingRupee is ERC20, Ownable {
+contract StakingRupee is Ownable {
 
     using Math for uint256;
+
+    /// @notice Constant contains 1e18 multiplier/divider
+    /// @dev Used to handle price decimals
+    uint64 private constant FACTOR = 1e18;
 
     /// @notice The ERC20 contract LKRS
     StableRupee private immutable stableRupee;
@@ -54,33 +58,60 @@ contract StakingRupee is ERC20, Ownable {
 
     error Log(address sender, uint256 value, uint256 value2, uint256 value3);
 
+    /// @notice Indicates an error of empty amount
+    /// @param sender The address of the sender
+    /// @param value The amount
     error EmptyAmount(address sender, uint256 value);
 
+    /// @notice Indicates an error of balance
+    /// @param sender The address of the sender
+    /// @param value The value of the balance
     error InsufficientBalance(address sender, uint256 value);
 
+    /// @notice Error when the reward is equal to 0
+    /// @param sender The address of the sender
+    /// @param value The value of the reward
     error IncorrectRewardRate(address sender, uint256 value);
 
+    /// @notice Triggered when try to change the duration if period not OK
+    /// @param finishTime The finishing time of reward
+    /// @param blockTime The time of the current block
     error RewardDurationNotFinish(uint256 finishTime, uint256 blockTime);
 
+    /// @notice Triggered when the transfer went wrong
+    /// @param to The address of the recipient
+    /// @param value The value of the transfered amount
     error TransferFailed(address to, uint256 value);
 
+    /// @notice Emits when user stake stake ETH
+    /// @param to The user address
+    /// @param value The number of ETH
     event StakeEth(address to, uint256 value);
 
+    /// @notice Emits when user stake stake LKRS
+    /// @param to The user address
+    /// @param value The number of LKRS
     event StakeRupee(address to, uint256 value);
 
+    /// @notice Emits when user withdraw staked ETH
+    /// @param to The user address
+    /// @param value The number of ETH
     event WithdrawEth(address to, uint256 value);
 
+    /// @notice Emits when user withdraw staked LKRS
+    /// @param to The user address
+    /// @param value The number of LKRS
     event WithdrawRupee(address to, uint256 value);
 
+    /// @notice Emits when reward are claimed by user
+    /// @param to The user address
+    /// @param value The number of rewards
     event RewardClaimed(address to, uint256 value);
 
     /// @notice Creates a contract of the Stake Stable Lankan Rupee (LKRS)
     /// @param initialOwner Address of the contract owner
     /// @param rupeeToken Address of the LKRS contract
-    constructor(
-        address initialOwner,
-        address rupeeToken
-    ) ERC20("Stable Lankan Rupee", "LKRS") Ownable(initialOwner) {
+    constructor(address initialOwner, address rupeeToken) Ownable(initialOwner) {
         stableRupee = StableRupee(rupeeToken);
     }
 
@@ -119,12 +150,12 @@ contract StakingRupee is ERC20, Ownable {
         }
 
         uint256 totalSupInUsd = ((totalSupplyEth *
-            stableRupee.getEthUsdRate()) / 1e18) +
-            (((totalSupplyRupee * 1e18) / stableRupee.getUsdRupeeRate()));
+            stableRupee.getEthUsdRate()) / FACTOR) +
+            (((totalSupplyRupee * FACTOR) / stableRupee.getUsdRupeeRate()));
 
         return
             rewardPerTokenStored +
-            (rewardRate * rewardTime * 1e18) /
+            (rewardRate * rewardTime * FACTOR) /
             totalSupInUsd;
     }
 
@@ -199,10 +230,10 @@ contract StakingRupee is ERC20, Ownable {
     /// @notice Returns the amount of earned tokens
     /// @param _account Address of the account to check
     function earned(address _account) public view returns (uint256) {
-        uint256 totalBalanceOfInUsd = ((balanceOfEth[_account] * stableRupee.getEthUsdRate()) / 1e18 ) +
-            (((balanceOfRupee[_account]*1e18) / stableRupee.getUsdRupeeRate()));
+        uint256 totalBalanceOfInUsd = ((balanceOfEth[_account] * stableRupee.getEthUsdRate()) / FACTOR ) +
+            (((balanceOfRupee[_account] * FACTOR) / stableRupee.getUsdRupeeRate()));
 
-        return ((totalBalanceOfInUsd * (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) + rewards[_account];
+        return ((totalBalanceOfInUsd * (rewardPerToken() - userRewardPerTokenPaid[_account])) / FACTOR) + rewards[_account];
     }
 
     /// @notice Used by the owner to chang de reward duration
@@ -218,7 +249,7 @@ contract StakingRupee is ERC20, Ownable {
     /// @notice Used by the owner to set the reward amount
     /// @dev Reward amount is devided by the duration
     /// @param _amount Reward amount
-    function setRewardAmount(uint256 _amount) external onlyOwner {
+    function setRewardAmount(uint256 _amount) external updateReward(address(0)) onlyOwner {
         if (block.timestamp >= finishAt) {
             rewardRate = _amount / duration;
         } else {
@@ -233,7 +264,7 @@ contract StakingRupee is ERC20, Ownable {
 
         if (
             stableRupee.balanceOf(address(this)) <=
-            ((rewardRate * duration) / 1e18)
+            ((rewardRate * duration) / FACTOR)
         ) {
             revert InsufficientBalance(
                 address(this),
@@ -261,7 +292,8 @@ contract StakingRupee is ERC20, Ownable {
 
     /// @notice Allows the user to claim the earned rewards
     /// @dev The earned tokens will be   to the user address
-    function getReward() external updateReward(_msgSender()) {
+    /// @return uint256 Returns the reward amount
+    function claimReward() external updateReward(_msgSender()) returns(uint256) {
         uint256 reward = rewards[_msgSender()];
 
         if (reward <= 0) {
@@ -275,5 +307,7 @@ contract StakingRupee is ERC20, Ownable {
         stableRupee.transfer(_msgSender(), reward);
 
         emit RewardClaimed(_msgSender(), reward);
+
+        return reward;
     }
 }

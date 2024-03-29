@@ -24,6 +24,10 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
     /// @dev TODO Must be replaced by a datafeed of the oracle
     uint40 private constant LKRS_RATE = 30275000000;
 
+    /// @notice Constant contains 1e18 multiplier
+    /// @dev Used to handle price decipals
+    uint64 private constant MULTIPLIER = 1e18;
+
     /// @notice Chainlink datafeed Aggregator Interface
     AggregatorV3Interface internal dataFeed;
 

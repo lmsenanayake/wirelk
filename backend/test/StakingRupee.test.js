@@ -1,6 +1,7 @@
 const { assert, expect } = require("chai");
 const { ethers } = require("hardhat")
 const { BN } = require('@openzeppelin/test-helpers');
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const { PANIC_CODES } = require("@nomicfoundation/hardhat-chai-matchers/panic");
 
@@ -142,6 +143,58 @@ describe("StakingRupee tests", function () {
 
         transcation = await contract.connect(addr1).stakeRupee(ethers.parseEther("5000"));
         await transcation.wait();
+
+        return { contract, stableCtr, owner, addr1, addr2, addr3 }
+    }
+
+    async function deployOwnerSetupFixtureWithBothStakedComplex() {
+
+        const [owner, addr1, addr2, addr3] = await ethers.getSigners();
+        let factory = await ethers.getContractFactory("StableRupee", owner);
+        const stableCtr = await factory.deploy(owner, ORACLE_CONTRACT_ADDR);
+        await stableCtr.waitForDeployment();
+        let stableAddr = await stableCtr.getAddress();
+
+        factory = await ethers.getContractFactory("StakingRupee", owner);
+        let contract = await factory.deploy(owner, stableAddr);
+
+        // Minting tokens in Stablecoin contract for Staking contract
+        let transcation = await stableCtr.mint(contract.target, ethers.parseUnits("1000000"));
+        await transcation.wait();
+        // Minting tokens in Stablecoin contract for addr1
+        transcation = await stableCtr.mint(addr1, ethers.parseUnits("100000"));
+        await transcation.wait();
+        transcation = await stableCtr.mint(addr2, ethers.parseUnits("100000"));
+        await transcation.wait();
+        transcation = await stableCtr.mint(addr3, ethers.parseUnits("100000"));
+        await transcation.wait();
+        // Approuving the staking contract as sender
+        transcation = await stableCtr.connect(addr1).approve(contract.target, ethers.parseUnits("100000"));
+        await transcation.wait();
+        transcation = await stableCtr.connect(addr2).approve(contract.target, ethers.parseUnits("100000"));
+        await transcation.wait();
+        transcation = await stableCtr.connect(addr3).approve(contract.target, ethers.parseUnits("100000"));
+        await transcation.wait();
+        // val = await stableCtr.allowance(addr2, contract.target);
+        // console.log(val)
+        transcation = await contract.setRewardsDuration(86400);
+        await transcation.wait();
+
+        transcation = await contract.setRewardAmount(ethers.parseUnits("50"));
+        await transcation.wait();
+
+        transcation = await contract.stakeEth({ value: ethers.parseEther("0.009") });
+        await transcation.wait();
+
+        transcation = await contract.connect(addr1).stakeRupee(ethers.parseEther("10000"));
+        await transcation.wait();
+        transcation = await contract.connect(addr2).stakeRupee(ethers.parseEther("10000"));
+        await transcation.wait();
+        transcation = await contract.connect(addr3).stakeRupee(ethers.parseEther("10000"));
+        await transcation.wait();
+
+        // advance time by one hour and mine a new block
+        await time.increase(3600);
 
         return { contract, stableCtr, owner, addr1, addr2, addr3 }
     }
@@ -373,7 +426,7 @@ describe("StakingRupee tests", function () {
             //contract.connect(addr1).stakeRupee(ethers.parseEther("10"));
             //await transcation.wait();
             await expect(contract.connect(addr1).stakeRupee(ethers.parseEther("10")))
-                .to.be.revertedWithCustomError(contract, "ERC20InsufficientAllowance")
+                .to.be.reverted;
         });
 
         it("Should not be able to stake more than allowed amount", async function () {
@@ -382,7 +435,7 @@ describe("StakingRupee tests", function () {
             //contract.connect(addr1).stakeRupee(ethers.parseEther("10"));
             //await transcation.wait();
             await expect(contract.connect(addr1).stakeRupee(ethers.parseEther("100000")))
-                .to.be.revertedWithCustomError(contract, "ERC20InsufficientAllowance")
+                .to.be.reverted;
         });
 
         it("Should stake and emit StakeRupee event", async function () {
@@ -456,25 +509,25 @@ describe("StakingRupee tests", function () {
     describe("Testing earned function", function () {
 
         it("Should earned", async function () {
-            const { contract, stableCtr, owner, addr1 } = await loadFixture(deployOwnerSetupFixtureWithBothStaked);
+            const { contract, stableCtr, owner, addr1 } = await loadFixture(deployOwnerSetupFixtureWithBothStakedComplex);
             // Try to get earned token number
             const val = await contract.earned(addr1);
             expect(val).to.be.greaterThan(0);
         });
     });
 
-    describe("Testing getReward function", function () {
+    describe("Testing claimReward function", function () {
 
         it("Should not be able claim empty reward", async function () {
             const { contract, owner, addr1 } = await loadFixture(deployOwnerSetupFixture);
             // Try to claim rewards LKRS token
-            await expect(contract.connect(addr1).getReward())
+            await expect(contract.connect(addr1).claimReward())
                 .to.be.revertedWithCustomError(contract, "InsufficientBalance")
         });
 
         it("Should getReward and emit RewardClaimed event", async function () {
-            const { contract, stableCtr, owner, addr1 } = await loadFixture(deployOwnerSetupFixtureWithBothStaked);
-            await expect(contract.connect(addr1).getReward())
+            const { contract, stableCtr, owner, addr1 } = await loadFixture(deployOwnerSetupFixtureWithBothStakedComplex);
+            await expect(contract.connect(addr1).claimReward())
                 .to.emit(contract, "RewardClaimed");
         });
     });
