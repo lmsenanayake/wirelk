@@ -1,0 +1,25 @@
+{
+  "name": "wirelk",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/material": "^5.15.14",
+    "@mui/material-nextjs": "^5.15.11",
+    "@rainbow-me/rainbowkit": "^2.0.4",
+    "@tanstack/react-query": "^5.28.12",
+    "dotenv": "^16.4.5",
+    "next": "14.1.4",
+    "react": "^18",
+    "react-dom": "^18",
+    "viem": "^2.9.6",
+    "wagmi": "^2.5.17"
+  }
+}
