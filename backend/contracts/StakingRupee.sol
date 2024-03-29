@@ -116,7 +116,7 @@ contract StakingRupee is Ownable {
     /// @notice Emits when owner set new reward amount
     /// @param time The update time
     /// @param value The number of rewards
-    event SetRewardRate(uint256 time, uint256 value);
+    event RewardRateChanged(uint256 time, uint256 value);
 
     /// @notice Creates a contract of the Stake Stable Lankan Rupee (LKRS)
     /// @param initialOwner Address of the contract owner
@@ -293,7 +293,7 @@ contract StakingRupee is Ownable {
         finishAt = block.timestamp + duration;
         updatedAt = block.timestamp;
 
-        emit SetRewardRate(updatedAt, rewardRate);
+        emit RewardRateChanged(updatedAt, rewardRate);
         // revert Log(address(this), _amount, rewardRate, updatedAt);
     }
 

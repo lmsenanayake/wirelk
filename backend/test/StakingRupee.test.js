@@ -269,18 +269,25 @@ describe("StakingRupee tests", function () {
             let transcation = await contract.setRewardsDuration(86400);
             await transcation.wait();
             // Try to set amount whne the staking contract has not enough LKRS tokens
-            await expect(contract.setRewardAmount(ethers.parseUnits("50", "mwei")))
+            await expect(contract.setRewardAmount(ethers.parseUnits("50")))
                 .to.be.revertedWithCustomError(contract, "InsufficientBalance")
         });
 
         it("Should set reward amount", async function () {
             const { contract, owner, addr1 } = await loadFixture(deployOwnerSetupFixture);
             // Try to set amount with UsableFixture
-            let transcation = await contract.setRewardAmount(ethers.parseUnits("50", "mwei"));
+            let transcation = await contract.setRewardAmount(ethers.parseUnits("50"));
             await transcation.wait();
 
             const val = await contract.rewardRate();
             expect(val).to.be.greaterThan(0);
+        });
+
+        it("Should set reward amount and emit RewardRateChanged event", async function () {
+            const { contract, stableCtr, owner, addr1 } = await loadFixture(deployOwnerSetupFixture);
+            await expect(contract.setRewardAmount(ethers.parseUnits("50")))
+                .to.emit(contract, "RewardRateChanged");
+
         });
     });
 
