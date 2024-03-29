@@ -8,7 +8,7 @@ import Sidebar from "../../components/Sidebar";
 import Buy from "../../components/Buy";
 
 
-const buy = () => {
+const stake = () => {
 
     const { address, isConnected } = useAccount();
 
@@ -29,4 +29,4 @@ const buy = () => {
     )
 }
 
-export default buy
+export default stake

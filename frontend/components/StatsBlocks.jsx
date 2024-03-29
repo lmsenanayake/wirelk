@@ -11,53 +11,69 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 
 import { useAccount } from "wagmi";
-import { contractAddress, contractAbi } from "@/constants";
+import { stableContractAddress, stableContractAbi, stakingContractAddress, stakingContractAbi } from "@/constants";
 import { publicClient } from '@/utils'
 
 const StatsBlocks = () => {
 
     const { address } = useAccount();
-    const [stablecoinData, setStablecoinData] = useState({});
+    const [usdRate, setUsdRate] = useState(0);
     const [error, setError] = useState("");
     const [stateSnack, setStateSnack] = useState(false);
+        const [stableData, setStableData] = useState({
+        balance : 0,
+        balanceUsd: 0,
+    });
+    const [stakingData, setStakingData] = useState({
+        balance : 0,
+        balanceUsd: 0,
+    });
     const handleOpenSnack = () => setStateSnack(true);
     const handleCloseSnack = () => setStateSnack(false);
 
-    // const fetchProposal = async(proposalId) => {
-    //     const data = await publicClient.readContract({
-    //         address: stableContractAddress,
-    //         abi: stableContractAbi,
-    //         functionName: 'name',
-    //         account: address,
-    //         args: ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"] 
-    //     })
-    //     // setProposalData({
-    //     //     id : proposalId,
-    //     //     description: data.description,
-    //     //     voteCount: data.voteCount
-    //     // })
-    //     console.log(data)
-    // }
-
-    const fetchUserBalance = async() => {
+    const fetchStableData = async() => {
         try {
             let balance = await publicClient.readContract({
-                address: contractAddress,
-                abi: contractAbi,
+                address: stableContractAddress,
+                abi: stableContractAbi,
                 functionName: 'balanceOf',
                 account: address,
-                args: ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"] 
-            })
+                args: [address] 
+            });
             let rate = await publicClient.readContract({
-                address: contractAddress,
-                abi: contractAbi,
+                address: stableContractAddress,
+                abi: stableContractAbi,
                 functionName: 'getUsdRupeeRate',
                 account: address
             })
-            //await fetchProposal(data)
-            setStablecoinData({
-                balance : balance,
-                usdRate: rate,
+            let lkrsBalance = Number(balance)/1e18;
+            let usdRate = Number(rate)/1e18;
+            let usdBalance = lkrsBalance / usdRate;
+            setUsdRate(usdRate);
+            setStableData({
+                balance : lkrsBalance,
+                balanceUsd: usdBalance,
+            });
+        } catch (error) {
+            setError(error.message)
+            handleOpenSnack()
+        }
+    }
+
+    const fetchStakingData = async(proposalId) => {
+        try {
+            const data = await publicClient.readContract({
+                address: stakingContractAddress,
+                abi: stakingContractAbi,
+                functionName: 'getStakedRupeeNumber',
+                account: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+                //args: ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"] 
+            });
+            let staking = Number(data)/1e18;
+            let stakingUsd = staking / usdRate;
+            setStakingData({
+                balance : staking,
+                balanceUsd: stakingUsd,
             })
         } catch (error) {
             setError(error.message)
@@ -66,11 +82,18 @@ const StatsBlocks = () => {
     }
 
     useEffect(() => {
-        const getAllEvents = async() => {
-            fetchUserBalance()
+        const getStats = async() => {
+            fetchStableData();
         }
-        getAllEvents()
+        getStats()
     }, [])
+
+    useEffect(() => {
+        const getStats = async() => {
+            fetchStakingData();
+        }
+        getStats()
+    }, [usdRate])
 
     return (
         <>
@@ -83,10 +106,10 @@ const StatsBlocks = () => {
                             Your balance
                             </Typography>
                             <Typography component="h3" variant="h5">
-                            {stablecoinData ? Number(stablecoinData.balance) : 0 } LKRS
+                            {stableData ? stableData.balance.toFixed(2) : 0 } LKRS
                             </Typography>
                             <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                            {stablecoinData ? (Number(stablecoinData.balance)/(Number(stablecoinData.usdRate)/1e18)) : 0 } $
+                            {stableData ? stableData.balanceUsd.toFixed(2) : 0 } $
                             </Typography>
                             <Typography variant="subtitle1" color="primary">
                             Buy more
@@ -94,8 +117,8 @@ const StatsBlocks = () => {
                         </CardContent>
                         <CardMedia
                             component="img"
-                            sx={{ width: 160, display: { xs: 'none', sm: 'block' } }}
-                            image="https://source.unsplash.com/random?wallpapers"
+                            sx={{ width: 180, display: { xs: 'none', sm: 'block' } }}
+                            image="https://www.bitcoin.com/static/1cf0d491c07de50827569913d37af2ef/14d1a/get-started-shared-multisig-bitcoin-wallet.webp"
                             alt={"post.imageLabel"}
                         />
                         </Card>
@@ -109,10 +132,10 @@ const StatsBlocks = () => {
                             Staked amount
                             </Typography>
                             <Typography component="h3" variant="h5">
-                            185000 LKRS
+                            {stakingData ? stakingData.balance.toFixed(2) : 0 } LKRS
                             </Typography>
                             <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                            616 $
+                            {stakingData ? stakingData.balanceUsd.toFixed(2) : 0 } $
                             </Typography>
                             <Typography variant="subtitle1" color="primary">
                             Stake more
@@ -120,8 +143,8 @@ const StatsBlocks = () => {
                         </CardContent>
                         <CardMedia
                             component="img"
-                            sx={{ width: 160, display: { xs: 'none', sm: 'block' } }}
-                            image="https://source.unsplash.com/random?wallpapers"
+                            sx={{ width: 180, display: { xs: 'none', sm: 'block' } }}
+                            image="https://academy-public.coinmarketcap.com/optimized-uploads/e6f29815ad074e2fbcd7d0aa3706f2cf.png"
                             alt={"post.imageLabel"}
                         />
                         </Card>

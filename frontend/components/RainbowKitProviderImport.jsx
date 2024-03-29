@@ -7,7 +7,6 @@ import { hardhat } from "wagmi/chains";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 
 const WALLET_CONNECT_ID = process.env.WALLET_CONNECT_ID || "";
-console.log(WALLET_CONNECT_ID)
 const config = getDefaultConfig({
   appName: "WireLK",
   projectId: WALLET_CONNECT_ID,
