@@ -63,6 +63,11 @@ contract StakingRupee is Ownable {
     /// @param value The amount
     error EmptyAmount(address sender, uint256 value);
 
+    /// @notice Indicates an error when token transfering
+    /// @param sender The address of the sender
+    /// @param value The amount
+    error TokenTransferError(address sender, uint256 value);
+
     /// @notice Indicates an error of balance
     /// @param sender The address of the sender
     /// @param value The value of the balance
@@ -107,6 +112,11 @@ contract StakingRupee is Ownable {
     /// @param to The user address
     /// @param value The number of rewards
     event RewardClaimed(address to, uint256 value);
+
+    /// @notice Emits when owner set new reward amount
+    /// @param time The update time
+    /// @param value The number of rewards
+    event SetRewardRate(uint256 time, uint256 value);
 
     /// @notice Creates a contract of the Stake Stable Lankan Rupee (LKRS)
     /// @param initialOwner Address of the contract owner
@@ -161,16 +171,20 @@ contract StakingRupee is Ownable {
 
     /// @notice Allows users to stake LKRS
     /// @dev The staked LKRS are stored in balanceOfRupee
-    function stakeRupee(uint256 _amount) external updateReward(_msgSender()) {
-        if (_amount <= 0) {
-            revert EmptyAmount(_msgSender(), _amount);
+    function stakeRupee(uint256 amount) external updateReward(_msgSender()) {
+        if (amount <= 0) {
+            revert EmptyAmount(_msgSender(), amount);
         }
 
-        stableRupee.transferFrom(_msgSender(), address(this), _amount);
-        balanceOfRupee[_msgSender()] += _amount;
-        totalSupplyRupee += _amount;
+        emit StakeRupee(_msgSender(), amount);
 
-        emit StakeRupee(_msgSender(), _amount);
+        bool success = stableRupee.transferFrom(_msgSender(), address(this), amount);
+        if (!success) {
+            revert TokenTransferError(_msgSender(), amount);
+        }
+
+        balanceOfRupee[_msgSender()] += amount;
+        totalSupplyRupee += amount;
     }
 
     /// @notice Allows users to stake ETH
@@ -187,75 +201,79 @@ contract StakingRupee is Ownable {
     }
 
     /// @notice Allows users to withdraw the total number or less of staked LKRS
-    /// @param _amount Number of LKRS user want to withdraw
-    function withdrawRupee(uint256 _amount) external updateReward(_msgSender()) {
-        if (_amount <= 0) {
-            revert EmptyAmount(_msgSender(), _amount);
+    /// @param amount Number of LKRS user want to withdraw
+    function withdrawRupee(uint256 amount) external updateReward(_msgSender()) {
+        if (amount <= 0) {
+            revert EmptyAmount(_msgSender(), amount);
         }
 
-        if (balanceOfRupee[_msgSender()] < _amount) {
-            revert InsufficientBalance(_msgSender(), _amount);
+        if (balanceOfRupee[_msgSender()] < amount) {
+            revert InsufficientBalance(_msgSender(), amount);
         }
 
-        balanceOfRupee[_msgSender()] -= _amount;
-        totalSupplyRupee -= _amount;
-        stableRupee.transfer(_msgSender(), _amount);
+        balanceOfRupee[_msgSender()] -= amount;
+        totalSupplyRupee -= amount;
 
-        emit WithdrawRupee(_msgSender(), _amount);
+        bool success = stableRupee.transfer(_msgSender(), amount);
+        if (!success) {
+            revert TokenTransferError(_msgSender(), amount);
+        }
+
+        emit WithdrawRupee(_msgSender(), amount);
     }
 
     /// @notice Allows users to withdraw the total number or less of staked ETH
-    /// @param _amount Number of ETH user want to withdraw
+    /// @param amount Number of ETH user want to withdraw
     /// @dev The withdraw ETH number will be sent to user address
-    function withdrawEth(uint256 _amount) external payable updateReward(_msgSender()) {
-        if (_amount <= 0) {
-            revert EmptyAmount(_msgSender(), _amount);
+    function withdrawEth(uint256 amount) external payable updateReward(_msgSender()) {
+        if (amount <= 0) {
+            revert EmptyAmount(_msgSender(), amount);
         }
 
-        if (balanceOfEth[_msgSender()] < _amount) {
-            revert InsufficientBalance(_msgSender(), _amount);
+        if (balanceOfEth[_msgSender()] < amount) {
+            revert InsufficientBalance(_msgSender(), amount);
         }
 
-        balanceOfEth[_msgSender()] -= _amount;
-        totalSupplyEth -= _amount;
+        balanceOfEth[_msgSender()] -= amount;
+        totalSupplyEth -= amount;
 
-        (bool sent, ) = payable(_msgSender()).call{value: _amount}("");
+        (bool sent, ) = payable(_msgSender()).call{value: amount}("");
         if (sent != true) {
-            revert TransferFailed(_msgSender(), _amount);
+            revert TransferFailed(_msgSender(), amount);
         }
 
-        emit WithdrawEth(_msgSender(), _amount);
+        emit WithdrawEth(_msgSender(), amount);
     }
 
     /// @notice Returns the amount of earned tokens
-    /// @param _account Address of the account to check
-    function earned(address _account) public view returns (uint256) {
-        uint256 totalBalanceOfInUsd = ((balanceOfEth[_account] * stableRupee.getEthUsdRate()) / FACTOR ) +
-            (((balanceOfRupee[_account] * FACTOR) / stableRupee.getUsdRupeeRate()));
+    /// @param account Address of the account to check
+    function earned(address account) public view returns (uint256) {
+        uint256 totalBalanceOfInUsd = ((balanceOfEth[account] * stableRupee.getEthUsdRate()) / FACTOR ) +
+            (((balanceOfRupee[account] * FACTOR) / stableRupee.getUsdRupeeRate()));
 
-        return ((totalBalanceOfInUsd * (rewardPerToken() - userRewardPerTokenPaid[_account])) / FACTOR) + rewards[_account];
+        return ((totalBalanceOfInUsd * (rewardPerToken() - userRewardPerTokenPaid[account])) / FACTOR) + rewards[account];
     }
 
     /// @notice Used by the owner to chang de reward duration
     /// @dev Durations must be passed in seconds
-    /// @param _duration Reward duration in seconds
-    function setRewardsDuration(uint256 _duration) external onlyOwner {
+    /// @param durationSeconds Reward duration in seconds
+    function setRewardsDuration(uint256 durationSeconds) external onlyOwner {
         if (block.timestamp < finishAt) {
             revert RewardDurationNotFinish(finishAt, block.timestamp);
         }
-        duration = _duration;
+        duration = durationSeconds;
     }
 
     /// @notice Used by the owner to set the reward amount
     /// @dev Reward amount is devided by the duration
-    /// @param _amount Reward amount
-    function setRewardAmount(uint256 _amount) external updateReward(address(0)) onlyOwner {
+    /// @param amount Reward amount
+    function setRewardAmount(uint256 amount) external updateReward(address(0)) onlyOwner {
         if (block.timestamp >= finishAt) {
-            rewardRate = _amount / duration;
+            rewardRate = amount / duration;
         } else {
             uint256 remainingRewards = (finishAt - block.timestamp) *
                 rewardRate;
-            rewardRate = (_amount + remainingRewards) / duration;
+            rewardRate = (amount + remainingRewards) / duration;
         }
 
         if (rewardRate <= 0) {
@@ -275,6 +293,7 @@ contract StakingRupee is Ownable {
         finishAt = block.timestamp + duration;
         updatedAt = block.timestamp;
 
+        emit SetRewardRate(updatedAt, rewardRate);
         // revert Log(address(this), _amount, rewardRate, updatedAt);
     }
 
@@ -303,10 +322,13 @@ contract StakingRupee is Ownable {
             );
         }
 
-        rewards[_msgSender()] = 0;
-        stableRupee.transfer(_msgSender(), reward);
-
         emit RewardClaimed(_msgSender(), reward);
+
+        rewards[_msgSender()] = 0;
+        bool success = stableRupee.transfer(_msgSender(), reward);
+        if (!success) {
+            revert TokenTransferError(_msgSender(), reward);
+        }
 
         return reward;
     }

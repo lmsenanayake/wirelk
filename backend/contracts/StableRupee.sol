@@ -24,9 +24,9 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
     /// @dev TODO Must be replaced by a datafeed of the oracle
     uint40 private constant LKRS_RATE = 30275000000;
 
-    /// @notice Constant contains 1e18 multiplier
+    /// @notice Constant contains 1e18 multiplier/divider
     /// @dev Used to handle price decipals
-    uint64 private constant MULTIPLIER = 1e18;
+    uint64 private constant FACTOR = 1e18;
 
     /// @notice Chainlink datafeed Aggregator Interface
     AggregatorV3Interface internal dataFeed;
@@ -72,7 +72,7 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
         }
 
         uint256 amount = ((((msg.value * getEthUsdRate()) / 1 ether) *
-            getUsdRupeeRate()) / 10 ** decimals());
+            getUsdRupeeRate()) / FACTOR);
         // revert Log(
         //     _msgSender(),
         //     amount,
@@ -91,12 +91,12 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
         if (balanace <= 0) {
             revert ERC20InsufficientBalance(owner(), balanace, 0);
         }
+        
+        emit Withdraw(owner(), balanace);
 
         // Send the total balance stored in the contract to the owner
         (bool sent, ) = payable(owner()).call{value: balanace}("");
         require(sent, "Failed to send Ether");
-
-        emit Withdraw(owner(), balanace);
     }
 
     /// @notice Returns the ETH/USD exchange rate from Chainlink
