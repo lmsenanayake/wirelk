@@ -147,7 +147,7 @@ const Buy = () => {
                     <Stack direction="row" spacing={2} sx={{mt:5}}>
                         <FormControl sx={{ m: 1, minWidth: 200 }}>
                         <InputLabel id="demo-simple-select-helper-label">
-                            LKRS token amount
+                            LKRS token number
                         </InputLabel>
                         <Select
                             labelId="demo-simple-select-helper-label"

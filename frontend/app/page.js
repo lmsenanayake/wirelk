@@ -7,10 +7,10 @@ const mainFeaturedPost = {
   title: 'First stablecoin for Sri Lankan Rupee (LKRS)',
   description:
     "Wirelk team is glad to announce you that we were able to create the first stablecoin for the Sri Lankan Rupee using the blockchain technology. Available in 2025 on Polygon.",
-  image: 'https://source.unsplash.com/random?wallpapers',
+  image: 'https://images.unsplash.com/photo-1579548122080-c35fd6820ecb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8d2FsbHBhcGVyc3x8fHx8fDE3MTIyMDAwOTk&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1080',
   imageText: 'main image description',
   link: '/buy',
-  linkText: 'Continue reading…',
+  linkText: 'Buy stablecoin…',
 };
 
 export default function Home() {

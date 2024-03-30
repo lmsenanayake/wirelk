@@ -1,7 +1,7 @@
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v13-appRouter";
 import RainbowKitProviderImport from "@/components/RainbowKitProviderImport";
 import { Inter } from "next/font/google";
-
+import './globals.css';
 import Layout from "@/components/Layout";
 
 const inter = Inter({ subsets: ["latin"] });

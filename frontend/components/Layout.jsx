@@ -49,7 +49,7 @@ const sections = [
         }}
         >
             <CssBaseline />
-            <Header title="Blog" />
+            <Header />
             <Container >
             <Menu  sections={sections} />
             <main>
