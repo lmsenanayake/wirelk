@@ -4,14 +4,14 @@ import { useAccount } from "wagmi";
 import Grid from "@mui/material/Grid";
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
-import StatsStakeLkrs from "../../components/StatsStakeLkrs";
-import StatsStakeEth from "../../components/StatsStakeEth";
-import NotConnected from "../../components/NotConnected";
-import SidebarStakeEarn from "../../components/SidebarStakeEarn";
-import StakeRupee from "../../components/StakeRupee";
-import StakeEth from "../../components/StakeEth";
-import UnstakeRupee from "../../components/UnstakeRupee";
-import UnstakeEth from "../../components/UnstakeEth";
+import StatsStakeLkrs from "@/components/StatsStakeLkrs";
+import StatsStakeEth from "@/components/StatsStakeEth";
+import NotConnected from "@/components/NotConnected";
+import SidebarStakeEarn from "@/components/SidebarStakeEarn";
+import StakeRupee from "@/components/StakeRupee";
+import StakeEth from "@/components/StakeEth";
+import UnstakeRupee from "@/components/UnstakeRupee";
+import UnstakeEth from "@/components/UnstakeEth";
 
 const page = () => {
 

@@ -11,8 +11,6 @@ import Menu from "./Menu";
 import Footer from "./Footer";
 import MainFeatured from "./MainFeatured";
 
-
-import { useOwnerContext } from "@/context/owner";
 import { useAccount } from "wagmi";
 
 //Importation des composants
@@ -21,14 +19,6 @@ import NotConnected from "@/components/NotConnected";
 const Layout = ({ children }) => {
     const { address, isConnected } = useAccount();
     const defaultTheme = createTheme();
-//   const { owner, refetchOwner } = useOwnerContext();
-
-//   useEffect(() => {
-//     if (isConnected) {
-//       refetchOwner();
-//     }
-//     // alert(owner);
-//   }, [isConnected]);
 
 const sections = [
   { title: 'Home', url: '/' },
@@ -51,19 +41,14 @@ const sections = [
             <CssBaseline />
             <Header />
             <Container >
-            <Menu  sections={sections} />
-            <main>
-                { children }
-            </main>
+                <Menu  sections={sections} />
+                <main>
+                    { children }
+                </main>
             </Container>
             <Footer />
         </Box>
     </ThemeProvider>
-
-
-
-
-
 </>
   );
 };

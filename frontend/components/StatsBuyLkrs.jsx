@@ -8,14 +8,26 @@ import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import { useStablecoinContext } from "@/context/stablecoin";
+import { publicClient } from '@/utils';
+import {
+    useAccount,
+    useWriteContract,
+    useWaitForTransactionReceipt,
+    useReadContract,
+} from "wagmi";
+import { 
+    stableContractAddress, 
+    stableContractAbi, 
+    stakingContractAddress, 
+    stakingContractAbi 
+} from "@/constants";
 
-import { useAccount } from "wagmi";
-import { stableContractAddress, stableContractAbi, stakingContractAddress, stakingContractAbi } from "@/constants";
-import { publicClient } from '@/utils'
 
 const StatsBuyLkrs = () => {
 
     const { address } = useAccount();
+    const { stablecoinRupeeRate, dataStableBalanceOf, fetchStableBalanceOf } = useStablecoinContext();
     const [usdRate, setUsdRate] = useState(0);
     const [error, setError] = useState("");
     const [stateSnack, setStateSnack] = useState(false);
@@ -31,40 +43,24 @@ const StatsBuyLkrs = () => {
     const handleCloseSnack = () => setStateSnack(false);
 
     const fetchStableData = async() => {
-        try {
-            let balance = await publicClient.readContract({
-                address: stableContractAddress,
-                abi: stableContractAbi,
-                functionName: 'balanceOf',
-                account: address,
-                args: [address] 
-            });
-            let rate = await publicClient.readContract({
-                address: stableContractAddress,
-                abi: stableContractAbi,
-                functionName: 'getUsdRupeeRate',
-                account: address
-            })
-            let lkrsBalance = Number(balance)/1e18;
-            let usdRate = Number(rate)/1e18;
-            let usdBalance = lkrsBalance / usdRate;
-            setUsdRate(usdRate);
-            setStableData({
-                balance : lkrsBalance,
-                balanceUsd: usdBalance,
-            });
-        } catch (error) {
-            setError(error.message)
-            handleOpenSnack()
-        }
+        let lkrsBalance = Number(dataStableBalanceOf)/1e18;
+        let usdRate = Number(stablecoinRupeeRate)/1e18;
+        let usdBalance = lkrsBalance / usdRate;
+        setUsdRate(usdRate);
+        setStableData({
+            balance : lkrsBalance,
+            balanceUsd: usdBalance,
+        });
     }
 
     useEffect(() => {
         const getStats = async() => {
             fetchStableData();
         }
-        getStats()
-    }, [])
+        if (dataStableBalanceOf) {
+            getStats()
+        }
+    }, [dataStableBalanceOf])
 
     return (
         <>

@@ -14,18 +14,28 @@ import { LoadingButton } from '@mui/lab';
 import Paper from "@mui/material/Paper";
 import { parseEther } from 'viem'
 import {
-  useAccount,
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useReadContract,
+    useAccount,
+    useWriteContract,
+    useWaitForTransactionReceipt,
+    useReadContract,
 } from "wagmi";
-
-import { stableContractAddress, stableContractAbi, stakingContractAddress, stakingContractAbi } from "@/constants";
+import { 
+    stableContractAddress, 
+    stableContractAbi, 
+    stakingContractAddress, 
+    stakingContractAbi 
+} from "@/constants";
+import { useStablecoinContext } from "@/context/stablecoin";
 import { publicClient } from "@/utils";
 
 const Buy = () => {
 
     const { address } = useAccount();
+    const { 
+        stablecoinRupeeRate,
+        stablecoinEthRate,
+        fetchStableBalanceOf 
+    } = useStablecoinContext();
     const [amount, setAmount] = useState(0);
     const [ethUsdRate, setEthUsdRate] = useState(0);
     const [lkrUsdRate, setLkrUsdRate] = useState(0);
@@ -60,6 +70,7 @@ const Buy = () => {
     const {data: hash1, isPending, writeContract: callBuy} = useWriteContract({
         mutation: {
             onSuccess: () => {
+                fetchStableBalanceOf();
                 handleOpenSnack({
                     stat: true,
                     type: "success",
@@ -95,26 +106,10 @@ const Buy = () => {
     };
 
     const fetchStableData = async(proposalId) => {
-        try {
-            let ethRate = await publicClient.readContract({
-                address: stableContractAddress,
-                abi: stableContractAbi,
-                functionName: 'getEthUsdRate',
-                account: address
-            });
-            let lkrRate = await publicClient.readContract({
-                address: stableContractAddress,
-                abi: stableContractAbi,
-                functionName: 'getUsdRupeeRate',
-                account: address
-            })
-            let eth = Number(ethRate)/1e18;
-            let lkr = Number(lkrRate)/1e18;
-            setEthUsdRate(eth);
-            setLkrUsdRate(lkr);
-        } catch (error) {
-            handleOpenSnack({ stat: true, type: "error", message: error.message });
-        }
+        let eth = Number(stablecoinEthRate)/1e18;
+        let lkr = Number(stablecoinRupeeRate)/1e18;
+        setEthUsdRate(eth);
+        setLkrUsdRate(lkr);
     }
 
     useEffect(() => {
@@ -122,7 +117,7 @@ const Buy = () => {
             fetchStableData();
         };
         getAllEvents();
-    }, []);
+    }, [stablecoinEthRate]);
 
 
     return (
