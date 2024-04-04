@@ -70,7 +70,7 @@ const StatsBuyLkrs = () => {
         <>
             <Grid item xs={12} md={6}>
                 <Card sx={{ display: 'flex' }}>
-                    <CardActionArea component="a" href="/buy">
+                    <CardActionArea>
                         <CardMedia
                         component="img"
                         height="170"
@@ -82,7 +82,7 @@ const StatsBuyLkrs = () => {
                                 Your stablecoin balance
                             </Typography>
                             <Typography variant="h6">
-                                {stableData ? stableData.balance.toFixed(2) : 0 } LKRS
+                                {stableData ? stableData.balance.toFixed(4) : 0 } LKRS
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                                 {stableData ? stableData.balanceUsd.toFixed(2) : 0 } $

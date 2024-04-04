@@ -8,11 +8,16 @@ import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import CardActions from "@mui/material/CardActions";
 import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
+import { LoadingButton } from '@mui/lab';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 
-import { useAccount } from "wagmi";
+import {
+  useAccount,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useReadContract,
+} from "wagmi";
 import { stableContractAddress, stableContractAbi, stakingContractAddress, stakingContractAbi } from "@/constants";
 import { publicClient } from '@/utils'
 
@@ -21,13 +26,28 @@ const SidebarStakeEarn = () => {
     const { address } = useAccount();
     const [usdRate, setUsdRate] = useState(0);
     const [error, setError] = useState("");
-    const [stateSnack, setStateSnack] = useState(false);
     const [stakingData, setStakingData] = useState({
         balance : 0,
         balanceUsd: 0,
     });
-    const handleOpenSnack = () => setStateSnack(true);
-    const handleCloseSnack = () => setStateSnack(false);
+    const [stateSnack, setStateSnack] = useState({
+        stat: false,
+        type: "error",
+        message: "Error occurred while processing your request",
+    });
+
+    const handleOpenSnack = (input) =>
+        setStateSnack({
+            stat: input.stat,
+            type: input.type,
+            message: input.message,
+        });
+    const handleCloseSnack = () =>
+        setStateSnack({
+            stat: false,
+            type: stateSnack.type,
+            message: stateSnack.message,
+        });
 
     const fetchStableData = async() => {
         try {
@@ -40,8 +60,11 @@ const SidebarStakeEarn = () => {
             let usdRate = Number(rate)/1e18;
             setUsdRate(usdRate);
         } catch (error) {
-            setError(error.message)
-            handleOpenSnack()
+            handleOpenSnack({
+                stat: true,
+                type: "error",
+                message: error.shortMessage,
+            });
         }
     }
 
@@ -59,12 +82,52 @@ const SidebarStakeEarn = () => {
             setStakingData({
                 balance : staking,
                 balanceUsd: stakingUsd,
-            })
+            });
         } catch (error) {
-            setError(error.message)
-            handleOpenSnack()
+            handleOpenSnack({
+                stat: true,
+                type: "error",
+                message: error.shortMessage,
+            });
         }
     }
+
+    const {data: hash1, isPending: isClaimPening, writeContract: claimRewards} = useWriteContract({
+        mutation: {
+            onSuccess: () => {
+                console.log(hash1);
+                handleOpenSnack({
+                    stat: true,
+                    type: "success",
+                    message: "Rewards have been added to your balance.",
+                });
+            },
+            onError: (error) => {
+                handleOpenSnack({
+                    stat: true,
+                    type: "error",
+                    message: error.shortMessage,
+                });
+            },
+        },
+    });
+
+    const handleClaimReward = () => {
+        if (stakingData.balance.toFixed(2) > 0.01) {
+            claimRewards({
+                address: stakingContractAddress,
+                abi: stakingContractAbi,
+                functionName: "claimReward",
+                account: address
+            });
+        } else {
+            handleOpenSnack({
+                stat: true,
+                type: "error",
+                message: "Not enough rewards. Withdraw limit is set to 0.01 LKRS.",
+            });
+        }
+    };
 
     useEffect(() => {
         const getStats = async() => {
@@ -94,13 +157,13 @@ const SidebarStakeEarn = () => {
                     />
                     <CardContent sx={{pb:0}}>
                         <Typography gutterBottom variant="h5" component="div">
-                            Earned tokens
+                            Earned rewards
                         </Typography>
                         <Typography variant="h6">
-                            {stakingData ? stakingData.balance.toFixed(2) : 0 } LKRS
+                            {stakingData ? stakingData.balance.toFixed(5) : 0 } LKRS
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                            {stakingData ? stakingData.balanceUsd.toFixed(2) : 0 } $
+                            {stakingData ? stakingData.balanceUsd.toFixed(5) : 0 } $
                         </Typography>
                     </CardContent>
                     <CardActions disableSpacing sx={{
@@ -112,23 +175,33 @@ const SidebarStakeEarn = () => {
                         pb:2,
                         pr:2,
                     }}>
-                        <Button size="large" variant="contained" color="success" >Claim </Button>
+                        <LoadingButton
+                            onClick={handleClaimReward}
+                            loading={isClaimPening}
+                            variant="contained"
+                            color="success"
+                            size="medium"
+                        >
+                            <span>Claim</span>
+                        </LoadingButton>
                     </CardActions>
                 </CardActionArea>
             </Card>
 
-            <Snackbar 
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                open={stateSnack} 
+            <Snackbar
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+                open={stateSnack.stat}
                 onClose={handleCloseSnack}
             >
                 <Alert
                     onClose={handleCloseSnack}
-                    severity="error"
+                    severity={stateSnack.type}
                     variant="filled"
-                    sx={{ width: '100%' }}
+                    sx={{ width: "100%" }}
                 >
-                    {error ? error : "Error occurred while processing your request !"}
+                {stateSnack.message
+                    ? stateSnack.message
+                    : "Error occurred while processing your request"}
                 </Alert>
             </Snackbar>
         </Grid>

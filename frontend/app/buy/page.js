@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import Grid from "@mui/material/Grid";
-import Divider from "@mui/material/Divider";
 import StatsBuyLkrs from "../../components/StatsBuyLkrs";
 import StatsStakeLkrs from "../../components/StatsStakeLkrs";
 import NotConnected from "../../components/NotConnected";

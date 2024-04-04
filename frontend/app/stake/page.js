@@ -10,6 +10,8 @@ import NotConnected from "../../components/NotConnected";
 import SidebarStakeEarn from "../../components/SidebarStakeEarn";
 import StakeRupee from "../../components/StakeRupee";
 import StakeEth from "../../components/StakeEth";
+import UnstakeRupee from "../../components/UnstakeRupee";
+import UnstakeEth from "../../components/UnstakeEth";
 
 const page = () => {
 
@@ -32,6 +34,7 @@ const page = () => {
                                 '& .markdown': {
                                 py: 3,
                                 },
+                                mb:5
                             }}
                         >
                             <Typography variant="h5" gutterBottom>
@@ -41,6 +44,8 @@ const page = () => {
                             <Divider />
                             <StakeRupee />
                             <StakeEth />
+                            <UnstakeRupee />
+                            <UnstakeEth />
                         </Grid>
                         <SidebarStakeEarn />
                     </Grid>
