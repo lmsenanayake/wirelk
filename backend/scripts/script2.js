@@ -26,14 +26,14 @@ async function main() {
     const ownerBalance = await dcontract.getStakedEthNumber();
     console.log('Owner ETH balance: ', ownerBalance.toString());
 
-    await dcontract.stakeRupee(ethers.parseEther("10"));
+    await dcontract.stakeRupee(ethers.parseEther("10000"));
     const ownerLKRSBalance = await dcontract.getStakedRupeeNumber();
     console.log('Owner LKRS balance: ', ownerLKRSBalance.toString());
 
-    /*const totalSup = await dcontract.totalSupply();
+    const totalSup = await dcontract.totalSupply();
     console.log('Total supply: ', totalSup.toString());
 
-    const ethusd = await dcontract.getEthUsd();
+    /*const ethusd = await dcontract.getEthUsd();
     console.log('ETH/USD exhange price: ', ethusd.toString());
 
     const impersonatedSigner = await ethers.getImpersonatedSigner("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");

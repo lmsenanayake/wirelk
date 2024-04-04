@@ -193,8 +193,26 @@ describe("StakingRupee tests", function () {
         transcation = await contract.connect(addr3).stakeRupee(ethers.parseEther("10000"));
         await transcation.wait();
 
+        // let val = await contract.earned(addr1);
+        // console.log(val);
+
         // advance time by one hour and mine a new block
         await time.increase(3600);
+
+        // val = await contract.earned(addr1);
+        // console.log(val);
+
+        // // advance time by one hour and mine a new block
+        // await time.increase(3600);
+
+        // val = await contract.earned(addr1);
+        // console.log(val);
+
+        // // advance time by one hour and mine a new block
+        // await time.increase(9600);
+
+        // val = await contract.earned(addr1);
+        // console.log(val);
 
         return { contract, stableCtr, owner, addr1, addr2, addr3 }
     }
