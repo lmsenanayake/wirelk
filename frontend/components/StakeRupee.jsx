@@ -105,7 +105,7 @@ const StakeRupee = () => {
     const {data: hash1, isPending: stakeIsPending, writeContract: stakeStablecoin} = useWriteContract({
         mutation: {
             onSuccess: () => {
-                setAmount(0);
+                setAmount("");
                 setIsGlobalPending(false);
                 fetchStakingRupeeNumber();
                 fetchStakingEarnings();
@@ -175,7 +175,7 @@ const StakeRupee = () => {
                     variant="outlined"
                     value={amount}
                     onChange={(event) => {
-                        setAmount(Number(event.target.value));
+                        setAmount(event.target.value);
                     }}
                 />
                 </FormControl>

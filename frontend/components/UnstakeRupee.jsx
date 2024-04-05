@@ -56,7 +56,7 @@ const UnstakeRupee = () => {
     const {data: hash1, isPending: unstakeIsPending, writeContract: unstakeCoins} = useWriteContract({
         mutation: {
             onSuccess: () => {
-                setAmount(0);
+                setAmount("");
                 fetchStakingRupeeNumber();
                 fetchStakingEarnings();
                 handleOpenSnack({
@@ -103,7 +103,7 @@ const UnstakeRupee = () => {
                     variant="outlined"
                     value={amount}
                     onChange={(event) => {
-                        setAmount(Number(event.target.value));
+                        setAmount(event.target.value);
                     }}
                 />
                 </FormControl>

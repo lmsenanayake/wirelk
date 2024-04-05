@@ -72,7 +72,7 @@ const StakeEth = () => {
     const {data: hash1, isPending: stakeIsPending, writeContract: stakeStablecoin} = useWriteContract({
         mutation: {
             onSuccess: () => {
-                setAmount(0);
+                setAmount("");
                 fetchStakingEthNumber();
                 fetchStakingEarnings();
                 handleOpenSnack({
@@ -121,7 +121,7 @@ const StakeEth = () => {
                     variant="outlined"
                     value={amount}
                     onChange={(event) => {
-                        setAmount(Number(event.target.value));
+                        setAmount(event.target.value);
                     }}
                 />
                 </FormControl>
