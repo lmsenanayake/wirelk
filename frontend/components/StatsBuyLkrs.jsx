@@ -27,7 +27,7 @@ const StatsBuyLkrs = () => {
     // const handleCloseSnack = () => setStateSnack(false);
 
     const updateStableData = () => {
-        if (dataStableBalanceOf) {
+        if (dataStableBalanceOf != undefined) {
             let lkrsBalance = Number(dataStableBalanceOf)/1e18;
             let usdRate = Number(stablecoinRupeeRate)/1e18;
             let usdBalance = lkrsBalance / usdRate;
@@ -39,7 +39,7 @@ const StatsBuyLkrs = () => {
     }
 
     useEffect(() => {
-        if (dataStableBalanceOf) {
+        if (dataStableBalanceOf != undefined) {
             updateStableData();
         }
     }, [dataStableBalanceOf])
@@ -61,7 +61,7 @@ const StatsBuyLkrs = () => {
                             </Typography>
                             
                             <Typography variant="h6">
-                                {stableData ? <>{stableData.balance.toFixed(4)} LKRS</> : <Skeleton animation="wave"/> }
+                                {stableData ? <>{stableData.balance.toFixed(2)} LKRS</> : <Skeleton animation="wave"/> }
                             </Typography>
                             
                             <Typography variant="body2" color="text.secondary">
