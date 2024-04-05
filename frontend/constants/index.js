@@ -1,5 +1,5 @@
-export const stableContractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-export const stakingContractAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+export const stableContractAddress = "0x3A906C603F080D96dc08f81CF2889dAB6FF299dE";
+export const stakingContractAddress = "0x820638ecd57B55e51CE6EaD7D137962E7A201dD9";
 
 export const stableContractAbi = [
     {
@@ -119,32 +119,6 @@ export const stableContractAbi = [
       "inputs": [
         {
           "internalType": "address",
-          "name": "sender",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "value",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "value2",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "value3",
-          "type": "uint256"
-        }
-      ],
-      "name": "Log",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
           "name": "owner",
           "type": "address"
         }
@@ -161,6 +135,17 @@ export const stableContractAbi = [
         }
       ],
       "name": "OwnableUnauthorizedAccount",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "value",
+          "type": "int256"
+        }
+      ],
+      "name": "SafeCastOverflowedIntToUint",
       "type": "error"
     },
     {

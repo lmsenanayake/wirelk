@@ -39,10 +39,10 @@ const StatsBuyLkrs = () => {
     }
 
     useEffect(() => {
-        if (dataStableBalanceOf != undefined) {
+        if (dataStableBalanceOf != undefined && stablecoinRupeeRate != undefined) {
             updateStableData();
         }
-    }, [dataStableBalanceOf])
+    }, [dataStableBalanceOf, stablecoinRupeeRate])
 
     return (
         <>
