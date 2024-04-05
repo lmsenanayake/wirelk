@@ -26,9 +26,10 @@ const StatsBuyLkrs = () => {
     // const handleOpenSnack = () => setStateSnack(true);
     // const handleCloseSnack = () => setStateSnack(false);
 
-    const updateStableData = () => {
+    const updateStableData = async() => {
         if (dataStableBalanceOf != undefined) {
-            let lkrsBalance = Number(dataStableBalanceOf)/1e18;
+            let data = await fetchStableBalanceOf();
+            let lkrsBalance = Number(data)/1e18;
             let usdRate = Number(stablecoinRupeeRate)/1e18;
             let usdBalance = lkrsBalance / usdRate;
             setStableData({
@@ -39,9 +40,13 @@ const StatsBuyLkrs = () => {
     }
 
     useEffect(() => {
-        if (dataStableBalanceOf != undefined && stablecoinRupeeRate != undefined) {
+        const getStats = async() => {
             updateStableData();
         }
+        if (dataStableBalanceOf != undefined && stablecoinRupeeRate != undefined) {
+            getStats()
+        }
+console.log("testing")
     }, [dataStableBalanceOf, stablecoinRupeeRate])
 
     return (
