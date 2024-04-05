@@ -1,5 +1,5 @@
-export const stableContractAddress = "0x3A906C603F080D96dc08f81CF2889dAB6FF299dE";
-export const stakingContractAddress = "0x820638ecd57B55e51CE6EaD7D137962E7A201dD9";
+export const stableContractAddress = "0xe23B23f2D5177699D5cEeD8FBd60d5BE7F4b27E0";
+export const stakingContractAddress = "0xb649ae3CAEa1e720fca6818Dff46c97cCa4D91E2";
 
 export const stableContractAbi = [
     {

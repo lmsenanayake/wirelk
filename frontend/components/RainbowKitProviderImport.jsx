@@ -3,14 +3,14 @@ import "@rainbow-me/rainbowkit/styles.css";
 
 import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
-import { hardhat } from "wagmi/chains";
+import { sepolia } from "wagmi/chains";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 
 const WALLET_CONNECT_ID = process.env.WALLET_CONNECT_ID || "";
 const config = getDefaultConfig({
   appName: "WireLK",
   projectId: WALLET_CONNECT_ID,
-  chains: [hardhat],
+  chains: [sepolia],
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
 
