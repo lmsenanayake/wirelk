@@ -6,26 +6,33 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { LoadingButton } from '@mui/lab';
 import TextField from "@mui/material/TextField";
-import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import { parseEther } from 'viem'
+import { parseEther } from 'viem';
+import { useStakingContext } from "@/context/staking";
+import { useStablecoinContext } from "@/context/stablecoin";
 import {
   useAccount,
   useWriteContract,
   useWaitForTransactionReceipt,
   useReadContract,
 } from "wagmi";
-
-import { stableContractAddress, stableContractAbi, stakingContractAddress, stakingContractAbi } from "@/constants";
-import { publicClient } from "@/utils";
+import { 
+    stableContractAddress, 
+    stableContractAbi, 
+    stakingContractAddress, 
+    stakingContractAbi 
+} from "@/constants";
 
 const UnstakeRupee = () => {
 
     const { address } = useAccount();
+    const {         
+        dataStakingRupeeNumber,
+        dataStakingEthNumber,
+        dataStakingEarnings,
+        fetchStakingRupeeNumber,
+        fetchStakingEthNumber,
+        fetchStakingEarnings
+    } = useStakingContext();
     const [amount, setAmount] = useState();
     const [stateSnack, setStateSnack] = useState({
         stat: false,
@@ -50,6 +57,8 @@ const UnstakeRupee = () => {
         mutation: {
             onSuccess: () => {
                 setAmount(0);
+                fetchStakingRupeeNumber();
+                fetchStakingEarnings();
                 handleOpenSnack({
                     stat: true,
                     type: "success",
@@ -101,6 +110,7 @@ const UnstakeRupee = () => {
                 <LoadingButton
                     onClick={handleUnstake}
                     loading={unstakeIsPending}
+                    disabled={!dataStakingRupeeNumber ? 'disabled' : null}
                     variant="contained"
                     color="error"
                 >

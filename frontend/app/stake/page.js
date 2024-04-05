@@ -12,6 +12,8 @@ import StakeRupee from "@/components/StakeRupee";
 import StakeEth from "@/components/StakeEth";
 import UnstakeRupee from "@/components/UnstakeRupee";
 import UnstakeEth from "@/components/UnstakeEth";
+ import { StablecoinContextProvider } from "@/context/stablecoin";
+ import { StakingContextProvider } from "@/context/staking";
 
 const page = () => {
 
@@ -21,34 +23,38 @@ const page = () => {
         <>
             {isConnected ? (
                 <>
-                    <Grid container spacing={4}>
-                        <StatsStakeLkrs />
-                        <StatsStakeEth />
-                    </Grid>
-                    <Grid container spacing={5} sx={{ mt: 0 }}>
-                        <Grid
-                            item
-                            xs={12}
-                            md={8}
-                            sx={{
-                                '& .markdown': {
-                                py: 3,
-                                },
-                                mb:5
-                            }}
-                        >
-                            <Typography variant="h5" gutterBottom>
-                                Earn interests with staking LKRS / ETH
-                            </Typography>
+                    <StablecoinContextProvider>
+                        <StakingContextProvider>
+                            <Grid container spacing={4}>
+                                <StatsStakeLkrs />
+                                <StatsStakeEth />
+                            </Grid>
+                            <Grid container spacing={5} sx={{ mt: 0 }}>
+                                <Grid
+                                    item
+                                    xs={12}
+                                    md={8}
+                                    sx={{
+                                        '& .markdown': {
+                                        py: 3,
+                                        },
+                                        mb:5
+                                    }}
+                                >
+                                    <Typography variant="h5" gutterBottom>
+                                        Earn interests with staking LKRS / ETH
+                                    </Typography>
 
-                            <Divider />
-                            <StakeRupee />
-                            <StakeEth />
-                            <UnstakeRupee />
-                            <UnstakeEth />
-                        </Grid>
-                        <SidebarStakeEarn />
-                    </Grid>
+                                    <Divider />
+                                    <StakeRupee />
+                                    <StakeEth />
+                                    <UnstakeRupee />
+                                    <UnstakeEth />
+                                </Grid>
+                                <SidebarStakeEarn />
+                            </Grid>
+                        </StakingContextProvider>
+                    </StablecoinContextProvider>
                 </>
             ) : (
                 <>

@@ -13,19 +13,34 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import { parseEther } from 'viem'
+import { useStablecoinContext } from "@/context/stablecoin";
+import { useStakingContext } from "@/context/staking";
 import {
-  useAccount,
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useReadContract,
+    useAccount,
+    useWriteContract,
+    useWaitForTransactionReceipt,
+    useReadContract,
 } from "wagmi";
-
-import { stableContractAddress, stableContractAbi, stakingContractAddress, stakingContractAbi } from "@/constants";
+import { 
+    stableContractAddress, 
+    stableContractAbi,
+    stakingContractAddress,
+    stakingContractAbi 
+} from "@/constants";
 import { publicClient } from "@/utils";
 
 const StakeRupee = () => {
 
     const { address } = useAccount();
+    const {         
+        dataStakingRupeeNumber,
+        dataStakingEthNumber,
+        dataStakingEarnings,
+        fetchStakingRupeeNumber,
+        fetchStakingEthNumber,
+        fetchStakingEarnings
+    } = useStakingContext();
+    const { dataStableBalanceOf } = useStablecoinContext();
     const [amount, setAmount] = useState();
     const [isGlobalPending, setIsGlobalPending] = useState(false);
     const [isApproved, setIsApproved] = useState(false);
@@ -92,6 +107,8 @@ const StakeRupee = () => {
             onSuccess: () => {
                 setAmount(0);
                 setIsGlobalPending(false);
+                fetchStakingRupeeNumber();
+                fetchStakingEarnings();
                 handleOpenSnack({
                     stat: true,
                     type: "success",
@@ -165,6 +182,7 @@ const StakeRupee = () => {
                 <LoadingButton
                     onClick={handleClickStakeButton}
                     loading={isGlobalPending}
+                    disabled={!dataStableBalanceOf ? 'disabled' : null}
                     variant="contained"
                 >
                     <span>Stake</span>

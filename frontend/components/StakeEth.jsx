@@ -1,8 +1,5 @@
 "use client"
 import React, { useState, useEffect } from "react";
-import Grid from "@mui/material/Grid";
-import Typography from '@mui/material/Typography';
-import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import Stack from '@mui/material/Stack';
 import Snackbar from '@mui/material/Snackbar';
@@ -16,19 +13,24 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import { parseEther } from 'viem'
+import { useStakingContext } from "@/context/staking";
 import {
-  useAccount,
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useReadContract,
+    useAccount,
+    useWriteContract,
+    useWaitForTransactionReceipt,
+    useReadContract,
 } from "wagmi";
-
-import { stableContractAddress, stableContractAbi, stakingContractAddress, stakingContractAbi } from "@/constants";
-import { publicClient } from "@/utils";
+import {
+    stableContractAddress, 
+    stableContractAbi,
+    stakingContractAddress,
+    stakingContractAbi
+} from "@/constants";
 
 const StakeEth = () => {
 
     const { address } = useAccount();
+    const { fetchStakingEthNumber, fetchStakingEarnings } = useStakingContext();
     const [amount, setAmount] = useState();
     const [stateDialog, setStateDialog] = useState(0);
     const [stateSnack, setStateSnack] = useState({
@@ -71,6 +73,8 @@ const StakeEth = () => {
         mutation: {
             onSuccess: () => {
                 setAmount(0);
+                fetchStakingEthNumber();
+                fetchStakingEarnings();
                 handleOpenSnack({
                     stat: true,
                     type: "success",

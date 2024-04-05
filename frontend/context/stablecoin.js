@@ -13,7 +13,7 @@ import { stableContractAddress, stableContractAbi } from "@/constants";
 import { publicClient } from '@/utils';
 
 export const StablecoinContextProvider = ({ children }) => {
-    const [dataStableBalanceOf, setDataStableBalanceOf] = useState("");
+    const [dataStableBalanceOf, setDataStableBalanceOf] = useState();
     const { address } = useAccount();
 
     const {

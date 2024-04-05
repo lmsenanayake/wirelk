@@ -8,6 +8,7 @@ import NotConnected from "@/components/NotConnected";
 import Sidebar from "@/components/Sidebar";
 import Buy from "@/components/Buy";
  import { StablecoinContextProvider } from "@/context/stablecoin";
+ import { StakingContextProvider } from "@/context/staking";
 
 
 const page = () => {
@@ -17,8 +18,8 @@ const page = () => {
     return (
         <>
             {isConnected ? (
-                <>
-                    <StablecoinContextProvider>
+                <StablecoinContextProvider>
+                    <StakingContextProvider>
                         <Grid container spacing={4}>
                             <StatsBuyLkrs />
                             <StatsStakeLkrs />
@@ -27,8 +28,8 @@ const page = () => {
                             <Buy />
                             <Sidebar />
                         </Grid>
-                    </StablecoinContextProvider>
-                </>
+                    </StakingContextProvider>
+                </StablecoinContextProvider>
             ) : (
                 <>
                     <div style={{marginBottom: 30}} />

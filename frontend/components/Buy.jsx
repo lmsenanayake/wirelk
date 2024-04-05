@@ -105,7 +105,7 @@ const Buy = () => {
         }
     };
 
-    const fetchStableData = async(proposalId) => {
+    const fetchStableData = async() => {
         let eth = Number(stablecoinEthRate)/1e18;
         let lkr = Number(stablecoinRupeeRate)/1e18;
         setEthUsdRate(eth);

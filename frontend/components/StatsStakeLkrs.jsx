@@ -8,76 +8,44 @@ import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-
-import { useAccount } from "wagmi";
-import { stableContractAddress, stableContractAbi, stakingContractAddress, stakingContractAbi } from "@/constants";
-import { publicClient } from '@/utils'
+import Skeleton from '@mui/material/Skeleton';
+import { useStablecoinContext } from "@/context/stablecoin";
+import { useStakingContext } from "@/context/staking";
 
 const StatsStakeLkrs = () => {
 
-    const { address } = useAccount();
+    const {
+        stablecoinRupeeRate,
+        stablecoinEthRate,
+        fetchStableBalanceOf 
+    } = useStablecoinContext();
+    const { 
+        dataStakingRupeeNumber,
+        fetchStakingRupeeNumber
+    } = useStakingContext();
     const [usdRate, setUsdRate] = useState(0);
-    const [error, setError] = useState("");
-    const [stateSnack, setStateSnack] = useState(false);
-    const [stakingData, setStakingData] = useState({
-        balance : 0,
-        balanceUsd: 0,
-    });
-    const handleOpenSnack = () => setStateSnack(true);
-    const handleCloseSnack = () => setStateSnack(false);
+    const [stakingData, setStakingData] = useState();
 
-    const fetchStableData = async() => {
-        try {
-            let rate = await publicClient.readContract({
-                address: stableContractAddress,
-                abi: stableContractAbi,
-                functionName: 'getUsdRupeeRate',
-                account: address
-            })
-            let usdRate = Number(rate)/1e18;
-            setUsdRate(usdRate);
-        } catch (error) {
-            setError(error.message)
-            handleOpenSnack()
-        }
-    }
-
-    const fetchStakingData = async(proposalId) => {
-        try {
-            const data = await publicClient.readContract({
-                address: stakingContractAddress,
-                abi: stakingContractAbi,
-                functionName: 'getStakedRupeeNumber',
-                account: address,
-                //args: ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"] 
-            });
-            let staking = Number(data)/1e18;
+    const updateStakingData = () => {
+        if (dataStakingRupeeNumber != undefined) {
+            let staking = Number(dataStakingRupeeNumber)/1e18;
             let stakingUsd = staking / usdRate;
             setStakingData({
                 balance : staking,
                 balanceUsd: stakingUsd,
             })
-        } catch (error) {
-            setError(error.message)
-            handleOpenSnack()
         }
     }
 
     useEffect(() => {
-        const getStats = async() => {
-            fetchStableData();
+        if (stablecoinRupeeRate != undefined) {
+            let usdRate = Number(stablecoinRupeeRate)/1e18;
+            setUsdRate(usdRate);
         }
-        getStats()
-    }, [])
-
-    useEffect(() => {
-        if (usdRate != 0) {
-            const getStats = async() => {
-                fetchStakingData();
-            }
-            getStats()
+        if (dataStakingRupeeNumber != undefined && usdRate != 0) {
+            updateStakingData();
         }
-    }, [usdRate])
+    }, [stablecoinRupeeRate, dataStakingRupeeNumber, usdRate])
 
     return (
         <>
@@ -86,7 +54,7 @@ const StatsStakeLkrs = () => {
                     <CardActionArea>
                         <CardMedia
                         component="img"
-                        height="170"
+                        height="150"
                         image="https://www.bitcoin.com/static/ec96957fa34fcf43eec2ffd80a3abe40/14d1a/get-started-what-is-staking.webp"
                         alt="LKRS stablecoin staking"
                         />
@@ -95,30 +63,15 @@ const StatsStakeLkrs = () => {
                                 LKRS staked amount
                             </Typography>
                             <Typography variant="h6">
-                                {stakingData ? stakingData.balance.toFixed(2) : 0 } LKRS
+                                { stakingData ? <>{stakingData.balance.toFixed(2)} LKRS</> : <Skeleton animation="wave"/> }
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                {stakingData ? stakingData.balanceUsd.toFixed(2) : 0 } $
+                                { stakingData ? <>{stakingData.balanceUsd.toFixed(2)} $</> : <Skeleton animation="wave"/> }
                             </Typography>
                         </CardContent>
                     </CardActionArea>
                 </Card>
             </Grid>
-
-            <Snackbar 
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                open={stateSnack} 
-                onClose={handleCloseSnack}
-            >
-                <Alert
-                    onClose={handleCloseSnack}
-                    severity="error"
-                    variant="filled"
-                    sx={{ width: '100%' }}
-                >
-                    {error ? error : "Error occurred while processing your request !"}
-                </Alert>
-            </Snackbar>
         </>
     )
 }
