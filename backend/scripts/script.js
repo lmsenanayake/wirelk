@@ -15,9 +15,9 @@ async function main() {
     console.log('Contract owner : ', owner);
 
     // Minting LKRS tokens to owner
-    await dcontract.mint(owner, ethers.parseUnits("100000"));
+    await dcontract.mint(owner, ethers.parseUnits("1000000"));
     // Minting LKRS tokens to Staking contract addr
-    await dcontract.mint(STAKING_CONTRACT_ADDR, ethers.parseUnits("1000000"));
+    await dcontract.mint(STAKING_CONTRACT_ADDR, ethers.parseUnits("2000000"));
 
     const contractBalance = await ethers.provider.getBalance(dcontract);
     console.log('Contract balance: ', contractBalance.toString());
@@ -34,8 +34,11 @@ async function main() {
     const ethusd = await dcontract.getEthUsdRate();
     console.log('ETH/USD exhange price: ', ethusd.toString());
 
+    const lkrUsd = await dcontract.getUsdRupeeRate();
+    console.log('USD/LKR exhange price: ', lkrUsd.toString());
+
     // Approuving the staking contract as sender
-    transcation = await dcontract.approve(STAKING_CONTRACT_ADDR, ethers.parseUnits("100000"));
+    transcation = await dcontract.approve(STAKING_CONTRACT_ADDR, ethers.parseUnits("2000000"));
     await transcation.wait();
 
     // const impersonatedSigner = await ethers.getImpersonatedSigner("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");

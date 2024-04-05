@@ -30,9 +30,6 @@ async function main() {
     const ownerLKRSBalance = await dcontract.getStakedRupeeNumber();
     console.log('Owner LKRS balance: ', ownerLKRSBalance.toString());
 
-    const totalSup = await dcontract.totalSupply();
-    console.log('Total supply: ', totalSup.toString());
-
     /*const ethusd = await dcontract.getEthUsd();
     console.log('ETH/USD exhange price: ', ethusd.toString());
 

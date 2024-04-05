@@ -1,14 +1,13 @@
 const hre = require("hardhat");
 const contractAddr = "Test";
 
+const OWNER_ADDR = process.env.OWNER_ADDR || "";
 const ORACLE_CONTRACT_ADDR = process.env.ORACLE_CONTRACT_ADDR || "";
 const STABLE_CONTRACT_ADDR = process.env.STABLE_CONTRACT_ADDR || "";
 
 async function main() {
 
-    const owner = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
-
-    const stableCntr = await hre.ethers.deployContract("StableRupee", [owner, ORACLE_CONTRACT_ADDR]);
+    const stableCntr = await hre.ethers.deployContract("StableRupee", [OWNER_ADDR, ORACLE_CONTRACT_ADDR]);
 
     await stableCntr.waitForDeployment();
 
@@ -16,7 +15,7 @@ async function main() {
         `Stable coin contract deployed to: ${stableCntr.target}`
     );
 
-    const stackCntr = await hre.ethers.deployContract("StakingRupee", [owner, stableCntr.target]);
+    const stackCntr = await hre.ethers.deployContract("StakingRupee", [OWNER_ADDR, stableCntr.target]);
 
     await stackCntr.waitForDeployment();
 

@@ -18,11 +18,11 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
 
     /// @notice Constant contains the LKR/USD decimal floating number
     /// @dev TODO Must be replaced by a datafeed of the oracle
-    uint8 private constant LKRS_DECIMALS = 8;
+    uint8 private constant LKR_DECIMALS = 8;
 
     /// @notice Constant contains the LKR/USD exange rate
     /// @dev TODO Must be replaced by a datafeed of the oracle
-    uint40 private constant LKRS_RATE = 30275000000;
+    uint40 private constant LKR_RATE = 30275000000;
 
     /// @notice Constant contains 1e18 multiplier/divider
     /// @dev Used to handle price decipals
@@ -44,8 +44,6 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
     /// @notice Indicates an error related to the current ETH value sent
     /// @param sender Address of the contract user
     error EmptyValue(address sender);
-
-    error Log(address sender, uint256 value, uint256 value2, uint256 value3);
 
     /// @notice Creates a ERC20 contract for the Stable Lankan Rupee (LKRS)
     /// @param initialOwner Address of the contract owner
@@ -73,12 +71,7 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
 
         uint256 amount = ((((msg.value * getEthUsdRate()) / 1 ether) *
             getUsdRupeeRate()) / FACTOR);
-        // revert Log(
-        //     _msgSender(),
-        //     amount,
-        //     getUsdRupeeRate(),
-        //     amount / 10 ** decimals()
-        // );
+
         _mint(_msgSender(), amount);
 
         emit Buy(_msgSender(), amount);
@@ -101,25 +94,18 @@ contract StableRupee is ERC20, ERC20Burnable, Ownable {
 
     /// @notice Returns the ETH/USD exchange rate from Chainlink
     /// @dev Oracle returns the price with 8 decimals precision
-    function getEthUsdRate() public view returns (uint) {
-        //(, int price, , , ) = dataFeed.latestRoundData();
-
-        // TODO calculate with DECIMALS
-        //uint8 Decimals = dataFeed.decimals();
-        //uint Price = uint(price);
-        //revert EmptyValue(_msgSender(), uint(price));
-        //return Price / 10 ** Decimals;
-        //return price.toUint256();
-        uint256 price = 356700000000;
-        uint8 dec = 8;
+    function getEthUsdRate() public view returns (uint256) {
+        (, int price, , , ) = dataFeed.latestRoundData();
+        uint8 feedDecimals = dataFeed.decimals();
         // Converting the price to 1e18 in order to have correct decimals
-        return (price * 10 ** decimals()) / 10 ** dec;
+        return (price.toUint256() * FACTOR) / 10 ** feedDecimals;
     }
 
     /// @notice Returns the USD/LKR exchange rate (temporary stored in constant)
     /// @dev TODO must replaced by a request to the Oracle's custom datafeeds
     function getUsdRupeeRate() public view returns (uint256) {
+        // TODO must be calculate with FACTOR and Oracle LKR price
         // Converting the rate to 1e18 in order to have correct decimals
-        return (LKRS_RATE * 10 ** decimals()) / 10 ** LKRS_DECIMALS;
+        return (LKR_RATE * 10 ** decimals()) / 10 ** LKR_DECIMALS;
     }
 }
