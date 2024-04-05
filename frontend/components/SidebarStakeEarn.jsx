@@ -154,7 +154,7 @@ const SidebarStakeEarn = () => {
                         <LoadingButton
                             onClick={handleClaimReward}
                             loading={isClaimPening}
-                            disabled={!stakingData ? 'disabled' : null}
+                            disabled={!stakingData || !stakingData.balance  ? 'disabled' : null}
                             variant="contained"
                             color="success"
                             size="medium"
