@@ -40,6 +40,7 @@ const Buy = () => {
     const [ethUsdRate, setEthUsdRate] = useState(0);
     const [lkrUsdRate, setLkrUsdRate] = useState(0);
     const [ethCost, setEthCost] = useState(0);
+    const [txConfirmation, setTxConfirmation] = useState(false);
     const [stateSnack, setStateSnack] = useState({
         stat: false,
         type: "error",
@@ -70,11 +71,10 @@ const Buy = () => {
     const {data: hash1, isPending, writeContract: callBuy} = useWriteContract({
         mutation: {
             onSuccess: () => {
-                //fetchStableBalanceOf();
                 handleOpenSnack({
                     stat: true,
                     type: "success",
-                    message: "Your transaction successfully set to be processed",
+                    message: "Your transaction has been successfully sent",
                 });
             },
             onError: (error) => {
@@ -87,13 +87,12 @@ const Buy = () => {
         },
     });
 
-    const {
-        isLoading: isConfirming,
-        isSuccess: isConfirmed,
-        error: errorConfirmation,
-    } = useWaitForTransactionReceipt({
-        hash1,
-    });
+    const checkTransactionReceipt = async (hash) => {
+        const transaction = await publicClient.waitForTransactionReceipt({ hash });
+        if (transaction) {
+            setTxConfirmation(true);
+        }
+    }
 
     const setLKRSAmount = async () => {
         if (ethCost != 0) {
@@ -121,16 +120,20 @@ const Buy = () => {
     }
 
     useEffect(() => {
-        if (stablecoinEthRate && stablecoinEthRate != undefined) {
+        if ((stablecoinEthRate && stablecoinEthRate != undefined) &&
+            (stablecoinRupeeRate && stablecoinRupeeRate != undefined)) {
             const getAllEvents = async () => {
                 updateStableData();
             };
             getAllEvents();
         }
-// console.info(stablecoinEthRate);
-console.info('isConfirmed', isConfirmed);
-console.info('isConfirming', isConfirming);
-        if (isConfirmed) {
+        if (hash1 != undefined) {
+            const callEvent = async () => {
+                checkTransactionReceipt(hash1);
+            };
+            callEvent();
+        }
+        if (txConfirmation) {
             fetchStableBalanceOf();
             handleOpenSnack({
                 stat: true,
@@ -138,7 +141,7 @@ console.info('isConfirming', isConfirming);
                 message: "Your transaction has been successfully processed",
             });
         }
-    }, [stablecoinEthRate, isConfirmed, isConfirming]);
+    }, [stablecoinEthRate, stablecoinRupeeRate, hash1, txConfirmation]);
 
 
     return (
