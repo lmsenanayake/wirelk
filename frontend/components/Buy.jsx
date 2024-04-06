@@ -40,7 +40,6 @@ const Buy = () => {
     const [ethUsdRate, setEthUsdRate] = useState(0);
     const [lkrUsdRate, setLkrUsdRate] = useState(0);
     const [ethCost, setEthCost] = useState(0);
-    const [txConfirmation, setTxConfirmation] = useState(false);
     const [stateSnack, setStateSnack] = useState({
         stat: false,
         type: "error",
@@ -90,8 +89,17 @@ const Buy = () => {
     const checkTransactionReceipt = async (hash) => {
         const transaction = await publicClient.waitForTransactionReceipt({ hash });
         if (transaction) {
-            setTxConfirmation(true);
+            refreshDataOnTxConfirmation();
         }
+    }
+
+    const refreshDataOnTxConfirmation = () => {
+        fetchStableBalanceOf();
+        handleOpenSnack({
+            stat: true,
+            type: "success",
+            message: "Your transaction has been successfully processed",
+        });
     }
 
     const setLKRSAmount = async () => {
@@ -133,15 +141,7 @@ const Buy = () => {
             };
             callEvent();
         }
-        if (txConfirmation) {
-            fetchStableBalanceOf();
-            handleOpenSnack({
-                stat: true,
-                type: "success",
-                message: "Your transaction has been successfully processed",
-            });
-        }
-    }, [stablecoinEthRate, stablecoinRupeeRate, hash1, txConfirmation]);
+    }, [stablecoinEthRate, stablecoinRupeeRate, hash1]);
 
 
     return (
