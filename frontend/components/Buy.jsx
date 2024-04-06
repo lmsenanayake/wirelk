@@ -70,11 +70,11 @@ const Buy = () => {
     const {data: hash1, isPending, writeContract: callBuy} = useWriteContract({
         mutation: {
             onSuccess: () => {
-                fetchStableBalanceOf();
+                //fetchStableBalanceOf();
                 handleOpenSnack({
                     stat: true,
                     type: "success",
-                    message: "Your transaction has been processed successfully.",
+                    message: "Your transaction successfully set to be processed",
                 });
             },
             onError: (error) => {
@@ -85,6 +85,14 @@ const Buy = () => {
                 });
             },
         },
+    });
+
+    const {
+        isLoading: isConfirming,
+        isSuccess: isConfirmed,
+        error: errorConfirmation,
+    } = useWaitForTransactionReceipt({
+        hash1,
     });
 
     const setLKRSAmount = async () => {
@@ -105,7 +113,7 @@ const Buy = () => {
         }
     };
 
-    const fetchStableData = async() => {
+    const updateStableData = async() => {
         let eth = Number(stablecoinEthRate)/1e18;
         let lkr = Number(stablecoinRupeeRate)/1e18;
         setEthUsdRate(eth);
@@ -113,11 +121,24 @@ const Buy = () => {
     }
 
     useEffect(() => {
-        const getAllEvents = async () => {
-            fetchStableData();
-        };
-        getAllEvents();
-    }, [stablecoinEthRate]);
+        if (stablecoinEthRate && stablecoinEthRate != undefined) {
+            const getAllEvents = async () => {
+                updateStableData();
+            };
+            getAllEvents();
+        }
+// console.info(stablecoinEthRate);
+console.info('isConfirmed', isConfirmed);
+console.info('isConfirming', isConfirming);
+        if (isConfirmed) {
+            fetchStableBalanceOf();
+            handleOpenSnack({
+                stat: true,
+                type: "success",
+                message: "Your transaction has been successfully processed",
+            });
+        }
+    }, [stablecoinEthRate, isConfirmed, isConfirming]);
 
 
     return (
