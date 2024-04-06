@@ -8,6 +8,7 @@ import { LoadingButton } from '@mui/lab';
 import TextField from "@mui/material/TextField";
 import { parseEther } from 'viem'
 import { useStakingContext } from "@/context/staking";
+import { publicClient } from "@/utils";
 import {
   useAccount,
   useWriteContract,
@@ -54,12 +55,10 @@ const UnstakeEth = () => {
         mutation: {
             onSuccess: () => {
                 setAmount("");
-                fetchStakingEthNumber();
-                fetchStakingEarnings();
                 handleOpenSnack({
                     stat: true,
                     type: "success",
-                    message: "Your transaction has been processed successfully.",
+                    message: "Your transaction has been sent successfully.",
                 });
             },
             onError: (error) => {
@@ -90,6 +89,31 @@ const UnstakeEth = () => {
         }
     };
 
+    const checkTransactionReceipt = async (hash) => {
+        const transaction = await publicClient.waitForTransactionReceipt({ hash });
+        if (transaction) {
+            refreshDataOnTxConfirmation();
+        }
+    }
+
+    const refreshDataOnTxConfirmation = () => {
+        fetchStakingEthNumber();
+        fetchStakingEarnings();
+        handleOpenSnack({
+            stat: true,
+            type: "success",
+            message: "Your transaction has been successfully processed",
+        });
+    }
+
+    useEffect(() => {
+        if (hash1 != undefined) {
+            const callEvent = async () => {
+                checkTransactionReceipt(hash1);
+            };
+            callEvent();
+        }
+    }, [hash1]);
 
     return (
         <>

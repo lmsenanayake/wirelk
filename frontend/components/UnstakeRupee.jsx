@@ -9,6 +9,7 @@ import TextField from "@mui/material/TextField";
 import { parseEther } from 'viem';
 import { useStakingContext } from "@/context/staking";
 import { useStablecoinContext } from "@/context/stablecoin";
+import { publicClient } from "@/utils";
 import {
   useAccount,
   useWriteContract,
@@ -57,12 +58,10 @@ const UnstakeRupee = () => {
         mutation: {
             onSuccess: () => {
                 setAmount("");
-                fetchStakingRupeeNumber();
-                fetchStakingEarnings();
                 handleOpenSnack({
                     stat: true,
                     type: "success",
-                    message: "Your transaction has been processed successfully.",
+                    message: "Your transaction has been sent successfully.",
                 });
             },
             onError: (error) => {
@@ -92,6 +91,33 @@ const UnstakeRupee = () => {
             });
         }
     };
+
+    const checkTransactionReceipt = async (hash) => {
+        const transaction = await publicClient.waitForTransactionReceipt({ hash });
+        if (transaction) {
+            refreshDataOnTxConfirmation();
+        }
+    }
+
+    const refreshDataOnTxConfirmation = () => {
+        fetchStakingRupeeNumber();
+        fetchStakingEarnings();
+        handleOpenSnack({
+            stat: true,
+            type: "success",
+            message: "Your transaction has been successfully processed",
+        });
+    }
+
+    useEffect(() => {
+        if (hash1 != undefined) {
+            const callEvent = async () => {
+                checkTransactionReceipt(hash1);
+            };
+            callEvent();
+        }
+    }, [hash1]);
+
 
     return (
         <>
