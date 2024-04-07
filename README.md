@@ -1,6 +1,6 @@
 # Projet WIRELK : Stablecoin for Sri Lankan Rupee (LKRS)
 
-## Resources externes :
+## Online Dapp & Demo :
 
 - Lien de l'application déployé : https://wirelk.vercel.app/ 
 
